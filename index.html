@@ -134,7 +134,7 @@
   <div id="editModal" role="dialog" aria-modal="true">
     <h3 id="modalTitle">Edit Entry</h3>
     <form id="editForm">
-      <input id="editDate" placeholder="Date (YYYY-MM-DD)" required />
+      <input id="editDate" placeholder="Date (DD-MM-YYYY)" required />
       <input id="editFarm" placeholder="Farm Name" required />
       <input id="edit333" placeholder="333" type="number" step="any" />
       <input id="edit332" placeholder="332" type="number" step="any" />
@@ -292,66 +292,111 @@ async function reopenDay(date){
 }
 
 // === Edit / Add ===
-document.getElementById('addEntryBtn').onclick=()=>{
-  if(!currentFileName)return alert('No report selected.');
-  isAddMode=true;editIndex=null;
-  document.getElementById('modalTitle').textContent='Add Entry';
-  document.getElementById('saveBtn').textContent='Add';
-  const today=new Date().toISOString().slice(0,10);
-  ['Date','Farm','333','332','331','330','313B'].forEach(id=>document.getElementById('edit'+id).value='');
-  document.getElementById('editDate').value=today;
-  document.getElementById('overlay').style.display='block';
-  document.getElementById('editModal').style.display='block';
+document.getElementById('addEntryBtn').onclick = () => {
+  if (!currentFileName) return alert('No report selected.');
+  isAddMode = true;
+  editIndex = null;
+
+  document.getElementById('modalTitle').textContent = 'Add Entry';
+  document.getElementById('saveBtn').textContent = 'Add';
+
+  // --- Generate today's date in DD-MM-YYYY format ---
+  const d = new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const today = `${day}-${month}-${year}`;
+
+  // --- Reset all fields ---
+  ['Date','Farm','333','332','331','330','313B'].forEach(id => {
+    document.getElementById('edit' + id).value = '';
+  });
+
+  document.getElementById('editDate').value = today;
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('editModal').style.display = 'block';
 };
 
-function editEntry(i){
-  if(!currentFileName)return alert('No file');
-  const pass=prompt('Enter admin password:');if(pass!=='123')return alert('Incorrect password.');
-  const data=currentFiles[currentFileName];
-  const e=data[i];if(!e)return alert('Not found');if(e.closed)return alert('Closed entry');
-  isAddMode=false;editIndex=i;
-  document.getElementById('modalTitle').textContent='Edit Entry';
-  document.getElementById('saveBtn').textContent='Save';
-  document.getElementById('editDate').value=e.date||'';
-  document.getElementById('editFarm').value=e.farm||'';
-  document.getElementById('edit333').value=e['333']||'';
-  document.getElementById('edit332').value=e['332']||'';
-  document.getElementById('edit331').value=e['331']||'';
-  document.getElementById('edit330').value=e['330']||'';
-  document.getElementById('edit313B').value=e['313-B']||'';
-  document.getElementById('overlay').style.display='block';
-  document.getElementById('editModal').style.display='block';
+function editEntry(i) {
+  if (!currentFileName) return alert('No file selected.');
+  const pass = prompt('Enter admin password:');
+  if (pass !== '123') return alert('Incorrect password.');
+
+  const data = currentFiles[currentFileName];
+  const e = data[i];
+  if (!e) return alert('Entry not found.');
+  if (e.closed) return alert('Closed entry.');
+
+  isAddMode = false;
+  editIndex = i;
+
+  document.getElementById('modalTitle').textContent = 'Edit Entry';
+  document.getElementById('saveBtn').textContent = 'Save';
+
+  // --- Pre-fill modal fields ---
+  document.getElementById('editDate').value = e.date || '';
+  document.getElementById('editFarm').value = e.farm || '';
+  document.getElementById('edit333').value = e['333'] || '';
+  document.getElementById('edit332').value = e['332'] || '';
+  document.getElementById('edit331').value = e['331'] || '';
+  document.getElementById('edit330').value = e['330'] || '';
+  document.getElementById('edit313B').value = e['313-B'] || '';
+
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('editModal').style.display = 'block';
 }
 
-function closeModal(){
-  document.getElementById('overlay').style.display='none';
-  document.getElementById('editModal').style.display='none';
+function closeModal() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('editModal').style.display = 'none';
 }
 
-document.getElementById('editForm').onsubmit=async e=>{
+document.getElementById('editForm').onsubmit = async e => {
   e.preventDefault();
-  if(!currentFileName)return;
-  const pass=prompt('Enter admin password:');if(pass!=='123')return alert('Incorrect password.');
-  const obj={
-    date:editDate.value.trim(),
-    farm:editFarm.value.trim(),
-    '333':edit333.value.trim(),
-    '332':edit332.value.trim(),
-    '331':edit331.value.trim(),
-    '330':edit330.value.trim(),
-    '313-B':edit313B.value.trim(),
-    closed:false
+  if (!currentFileName) return;
+
+  const pass = prompt('Enter admin password:');
+  if (pass !== '123') return alert('Incorrect password.');
+
+  const obj = {
+    date: editDate.value.trim(),
+    farm: editFarm.value.trim(),
+    '333': edit333.value.trim(),
+    '332': edit332.value.trim(),
+    '331': edit331.value.trim(),
+    '330': edit330.value.trim(),
+    '313-B': edit313B.value.trim(),
+    closed: false
   };
+
+  // --- Validate date format DD-MM-YYYY ---
+  if (!/^\d{2}-\d{2}-\d{4}$/.test(obj.date)) {
+    alert('Please use date format DD-MM-YYYY');
+    return;
+  }
+
   showLoading(true);
-  try{
-    if(isAddMode)currentFiles[currentFileName].push(obj);
-    else Object.assign(currentFiles[currentFileName][editIndex],obj);
-    await supabase.from('feed_reports').update({data:currentFiles[currentFileName]}).eq('filename',currentFileName);
+  try {
+    if (isAddMode) {
+      currentFiles[currentFileName].push(obj);
+    } else {
+      Object.assign(currentFiles[currentFileName][editIndex], obj);
+    }
+
+    await supabase
+      .from('feed_reports')
+      .update({ data: currentFiles[currentFileName] })
+      .eq('filename', currentFileName);
+
     renderReport(currentFiles[currentFileName]);
-  }catch(err){alert('Error saving');console.error(err);}
+  } catch (err) {
+    alert('Error saving');
+    console.error(err);
+  }
   showLoading(false);
   closeModal();
 };
+
 
 // === Remove ===
 async function removeEntry(i){
