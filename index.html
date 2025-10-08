@@ -1,39 +1,112 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Farm Feed Report Manager</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Farm Feed Report Manager — ITTIFAQ FEEDS</title>
+
+  <!-- minimal reset + styles -->
+  <style>
+    :root { --blue:#007bff; --danger:#dc3545; --green:#28a745; --teal:#17a2b8; }
+    body { font-family: Inter, system-ui, Arial, sans-serif; margin:20px; background:#f6f8fb; color:#222; }
+    header { text-align:center; margin-bottom:18px; }
+    header h1 { margin:0; font-size:22px; }
+    .tabs { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .tablink { padding:8px 14px; border:0; background:#e6e9ee; border-radius:8px; cursor:pointer; font-weight:600; }
+    .tablink.active { background:var(--blue); color:#fff; }
+    .tabcontent { display:none; background:#fff; padding:18px; border-radius:10px; box-shadow:0 6px 18px rgba(10,20,40,0.06); }
+    .tabcontent.active { display:block; }
+    input[type=file] { padding:6px; }
+    #fileList div { margin-top:8px; padding:8px; background:#f0f7ff; border-radius:6px; display:inline-block; }
+    .report-controls { display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+    .report-actions { margin-left:auto; display:flex; gap:8px; }
+    button { cursor:pointer; border:0; border-radius:8px; padding:8px 12px; font-weight:600; }
+    .print-btn { background:var(--green); color:white; }
+    .backup-btn { background:var(--teal); color:white; }
+    .add-btn { background:var(--blue); color:white; }
+    .clear-btn { background:var(--danger); color:white; }
+
+    #reportWrapper { overflow-x:auto; margin-top:8px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { border:1px solid #d0d7df; padding:8px; text-align:center; }
+    th { background:#f1f5f9; font-weight:700; }
+    tr.total-row { font-weight:800; background:#fbfbfb; }
+    tr.closed-row td { opacity:0.65; }
+    .edit-btn, .remove-btn, .close-day-btn { padding:6px 8px; border-radius:6px; color:#fff; border:0; }
+    .edit-btn { background:var(--blue); }
+    .remove-btn { background:var(--danger); margin-left:6px; }
+    .close-day-btn { background:#6c757d; }
+    .disabled { opacity:0.5; pointer-events:none; }
+
+    /* Modal */
+    #overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9998; }
+    #editModal { display:none; position:fixed; z-index:9999; left:50%; top:50%; transform:translate(-50%,-50%); width:360px; background:#fff; padding:18px; border-radius:10px; box-shadow:0 12px 40px rgba(10,20,40,0.25); }
+    #editModal h3 { margin:0 0 10px 0; }
+    #editModal input { width:100%; padding:8px; margin-bottom:8px; border:1px solid #cfd8e3; border-radius:6px; }
+    .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+
+    /* Loading overlay */
+    #loadingOverlay { display:none; position:fixed; inset:0; background:rgba(255,255,255,0.7); z-index:10000; text-align:center; padding-top:160px; }
+    .spinner { border:6px solid #eee; border-top:6px solid var(--blue); width:44px; height:44px; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 10px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* Print styles */
+    @media print {
+      body { margin:0; }
+      .tabs, .report-controls, #editModal, #overlay, #loadingOverlay { display:none !important; }
+      table { page-break-inside:auto; }
+      tr { page-break-inside:avoid; page-break-after:auto; }
+    }
+
+    /* small responsive tweak */
+    @media (max-width:520px) {
+      #editModal { width:92%; }
+      .report-actions { margin-left:0; width:100%; justify-content:space-between; }
+    }
+
+  </style>
+
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header>
     <h1>🐄 Farm Feed Report Manager</h1>
+    <div style="font-size:12px;color:#666;margin-top:6px">Powered by <strong>ITTIFAQ FEEDS</strong></div>
   </header>
 
-  <!-- Tabs -->
   <div class="tabs">
-    <button class="tablink active" onclick="openTab(event, 'uploadTab')">Upload / Backup</button>
-    <button class="tablink" onclick="openTab(event, 'reportTab')">Feed Report</button>
-    <button class="tablink" onclick="openTab(event, 'adminTab')">Admin</button>
+    <button class="tablink active" onclick="openTab(event,'uploadTab')">Upload</button>
+    <button class="tablink" onclick="openTab(event,'reportTab')">Feed Report</button>
+    <button class="tablink" onclick="openTab(event,'adminTab')">Admin</button>
   </div>
 
-  <!-- Upload / Backup Tab -->
+  <!-- Upload Tab -->
   <div id="uploadTab" class="tabcontent active">
-    <h2>Upload & Manage Reports</h2>
-    <input type="file" id="fileInput" multiple accept=".json" />
-    <div id="fileList"></div>
-    <button id="backupBtn">Download All Backups</button>
+    <h3>Upload JSON Reports</h3>
+    <input id="fileInput" type="file" accept=".json" multiple />
+    <div id="fileList" style="margin-top:10px"></div>
+    <p style="color:#666;font-size:13px;margin-top:8px">Tip: upload JSON files where each file is an array of objects with fields: <code>date, farm, 333, 332, 331, 330, 313-B</code>.</p>
   </div>
 
-  <!-- Feed Report Tab -->
+  <!-- Report Tab -->
   <div id="reportTab" class="tabcontent">
-    <h2>Feed Report Viewer / Editor</h2>
-    <label>Select Report:</label>
-    <select id="fileSelector"></select>
+    <h3>Feed Report Viewer / Editor</h3>
+
+    <div class="report-controls">
+      <label for="fileSelector">Select Report:</label>
+      <select id="fileSelector" style="padding:8px;border-radius:6px;border:1px solid #cfd8e3"></select>
+
+      <div class="report-actions">
+        <button class="add-btn" id="addEntryBtn">+ Add Entry</button>
+        <button class="print-btn" id="printBtn">Print Report</button>
+        <button class="backup-btn" id="backupCurrentBtn">Backup (JSON)</button>
+        <button class="backup-btn" id="csvBtn">Export CSV</button>
+      </div>
+    </div>
+
     <div id="reportWrapper">
-      <table id="reportTable" style="display:none;">
+      <table id="reportTable" style="display:none">
         <thead>
           <tr>
             <th>DATE</th>
@@ -43,7 +116,7 @@
             <th>331</th>
             <th>330</th>
             <th>313-B</th>
-            <th class="action-column">ACTIONS</th>
+            <th>ACTIONS</th>
           </tr>
         </thead>
       </table>
@@ -52,35 +125,474 @@
 
   <!-- Admin Tab -->
   <div id="adminTab" class="tabcontent">
-    <h2>Admin Controls</h2>
-    <button id="clearBtn">Clear All Data</button>
+    <h3>Admin</h3>
+    <button id="clearBtn" class="clear-btn">Clear All Data</button>
   </div>
 
-  <!-- Edit Modal -->
+  <!-- Modal (used for Add & Edit) -->
   <div id="overlay"></div>
-  <div id="editModal">
-    <h3>Edit Entry</h3>
+  <div id="editModal" role="dialog" aria-modal="true">
+    <h3 id="modalTitle">Edit Entry</h3>
     <form id="editForm">
-      <input type="text" id="editDate" placeholder="Date" required />
-      <input type="text" id="editFarm" placeholder="Farm Name" required />
-      <input type="number" step="any" id="edit333" placeholder="333" />
-      <input type="number" step="any" id="edit332" placeholder="332" />
-      <input type="number" step="any" id="edit331" placeholder="331" />
-      <input type="number" step="any" id="edit330" placeholder="330" />
-      <input type="number" step="any" id="edit313B" placeholder="313-B" />
+      <input id="editDate" placeholder="Date (YYYY-MM-DD)" required />
+      <input id="editFarm" placeholder="Farm Name" required />
+      <input id="edit333" placeholder="333" type="number" step="any" />
+      <input id="edit332" placeholder="332" type="number" step="any" />
+      <input id="edit331" placeholder="331" type="number" step="any" />
+      <input id="edit330" placeholder="330" type="number" step="any" />
+      <input id="edit313B" placeholder="313-B" type="number" step="any" />
       <div class="modal-actions">
-        <button type="submit">Save</button>
-        <button type="button" onclick="closeModal()">Cancel</button>
+        <button type="submit" id="saveBtn" class="add-btn">Save</button>
+        <button type="button" onclick="closeModal()" style="background:#9aa3ad;color:#fff;padding:8px 12px;border-radius:8px">Cancel</button>
       </div>
     </form>
   </div>
 
-  <!-- Loading Spinner -->
+  <!-- Loading overlay -->
   <div id="loadingOverlay">
     <div class="spinner"></div>
-    <p>Processing...</p>
+    <div style="color:#444;font-weight:600">Processing...</div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- App logic -->
+  <script>
+    // === Supabase setup - replace these with your own keys ===
+    const SUPABASE_URL = "YOUR_SUPABASE_URL";
+    const SUPABASE_KEY = "YOUR_SUPABASE_KEY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // === Globals ===
+    const FIELDS = ['333','332','331','330','313-B'];
+    let currentFiles = {};            // { filename: dataArray }
+    let currentFileName = null;
+    let editIndex = null;
+    let isAddMode = false;
+
+    // === UI helpers ===
+    function showLoading(show){ document.getElementById('loadingOverlay').style.display = show ? 'block' : 'none'; }
+    function openTab(evt,id){
+      document.querySelectorAll('.tabcontent').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tablink').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if(evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+    }
+
+    // sanitize text for insertion
+    function escapeHtml(s){ return String(s===undefined||s===null ? '' : s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[ch])); }
+
+    // === Init - load from supabase ===
+    window.addEventListener('DOMContentLoaded', async () => {
+      showLoading(true);
+      try {
+        const { data, error } = await supabase.from('feed_reports').select('*');
+        if (error) console.error('Supabase error:', error);
+        if (data) data.forEach(r => currentFiles[r.filename] = r.data || []);
+      } catch(e){ console.error(e); }
+      updateFileList();
+      updateFileSelector();
+      showLoading(false);
+    });
+
+    // === File upload handler ===
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      showLoading(true);
+      const uploaded = [];
+      for (const f of files) {
+        try {
+          const text = await f.text();
+          const json = JSON.parse(text);
+          if (!Array.isArray(json)) { alert(`File ${f.name} must contain an array of entries.`); continue; }
+          currentFiles[f.name] = json;
+          uploaded.push(f.name);
+          await supabase.from('feed_reports').upsert([{ filename: f.name, data: json }]);
+        } catch (err) {
+          alert(`Error parsing ${f.name}: ${err.message || err}`);
+        }
+      }
+      updateFileList();
+      updateFileSelector();
+      if (uploaded.length) {
+        currentFileName = uploaded[0];
+        document.getElementById('fileSelector').value = uploaded[0];
+        loadReport(uploaded[0]);
+        // switch to report tab
+        openTab({ currentTarget: document.querySelector('.tablink:nth-child(2)') }, 'reportTab');
+      }
+      showLoading(false);
+    });
+
+    // === File list / selector ===
+    function updateFileList(){
+      const list = document.getElementById('fileList');
+      const names = Object.keys(currentFiles);
+      if (!names.length) list.innerHTML = '<div style="color:#666">No files loaded</div>';
+      else list.innerHTML = names.map(n => `<div>${escapeHtml(n)}</div>`).join('');
+    }
+    function updateFileSelector(){
+      const sel = document.getElementById('fileSelector');
+      const names = Object.keys(currentFiles);
+      sel.innerHTML = names.length ? names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('') : '<option value="">-- No files --</option>';
+      if (names.length) {
+        if (!currentFileName || !names.includes(currentFileName)) currentFileName = names[0];
+        sel.value = currentFileName;
+        loadReport(currentFileName);
+      } else {
+        currentFileName = null;
+        document.getElementById('reportTable').style.display = 'none';
+      }
+    }
+    document.getElementById('fileSelector').addEventListener('change', e => {
+      const val = e.target.value;
+      if (!val) return;
+      currentFileName = val;
+      loadReport(val);
+    });
+
+    // === Render report ===
+    function loadReport(filename){
+      currentFileName = filename;
+      renderReport(currentFiles[filename] || []);
+    }
+
+    function renderReport(data){
+      const table = document.getElementById('reportTable');
+      // clear previous tbodies
+      while (table.tBodies.length) table.removeChild(table.tBodies[0]);
+      if (!data || !data.length) { table.style.display='none'; return; }
+
+      // group by date
+      const groups = {};
+      data.forEach((entry, idx) => {
+        const date = entry.date || 'Unknown Date';
+        if (!groups[date]) groups[date] = [];
+        groups[date].push(Object.assign({}, entry, {_index: idx}));
+      });
+
+      Object.keys(groups).sort().forEach(date => {
+        const tbody = document.createElement('tbody');
+        const totals = FIELDS.reduce((acc,f)=> (acc[f]=0,acc), {});
+        const closedFlag = groups[date].every(ent => ent.closed);
+
+        groups[date].forEach(entry => {
+          const tr = document.createElement('tr');
+          if (entry.closed) tr.classList.add('closed-row');
+          const cells = [];
+          cells.push(`<td>${escapeHtml(entry.date||'')}</td>`);
+          cells.push(`<td>${escapeHtml(entry.farm||'')}</td>`);
+          FIELDS.forEach(f => {
+            const v = entry[f];
+            if (v !== undefined && v !== null && v !== '') totals[f] += parseFloat(v)||0;
+            cells.push(`<td>${escapeHtml(v === undefined || v === null ? '' : v)}</td>`);
+          });
+
+          // actions: disabled when entry.closed === true
+          const disabled = entry.closed ? 'disabled' : '';
+          const editBtn = `<button class="edit-btn" ${disabled} onclick="editEntry(${entry._index})">Edit</button>`;
+          const removeBtn = `<button class="remove-btn" ${disabled} onclick="removeEntry(${entry._index})">Remove</button>`;
+          cells.push(`<td>${editBtn}${removeBtn}</td>`);
+          tr.innerHTML = cells.join('');
+          tbody.appendChild(tr);
+        });
+
+        // total row + close button (if not already closed)
+        const totalRow = document.createElement('tr');
+        totalRow.classList.add('total-row');
+        const totalTds = [`<td colspan="2">TOTAL (${escapeHtml(date)})</td>`];
+        FIELDS.forEach(f => totalTds.push(`<td>${totals[f]}</td>`));
+        const closeBtnHtml = closedFlag
+          ? `<td style="font-weight:700;color:#444">CLOSED</td>`
+          : `<td><button class="close-day-btn" onclick="closeDay('${escapeHtml(date)}')">Close Day</button></td>`;
+        totalRow.innerHTML = totalTds.join('') + closeBtnHtml;
+        tbody.appendChild(totalRow);
+
+        table.appendChild(tbody);
+      });
+
+      table.style.display = 'table';
+    }
+
+    // === Edit / Add ===
+    document.getElementById('addEntryBtn').addEventListener('click', () => {
+      if (!currentFileName) return alert('No report selected.');
+      isAddMode = true;
+      editIndex = null;
+      document.getElementById('modalTitle').textContent = 'Add Entry';
+      document.getElementById('saveBtn').textContent = 'Add';
+      // clear fields, default date to today
+      const today = new Date().toISOString().slice(0,10);
+      document.getElementById('editDate').value = today;
+      document.getElementById('editFarm').value = '';
+      document.getElementById('edit333').value = '';
+      document.getElementById('edit332').value = '';
+      document.getElementById('edit331').value = '';
+      document.getElementById('edit330').value = '';
+      document.getElementById('edit313B').value = '';
+      document.getElementById('overlay').style.display = 'block';
+      document.getElementById('editModal').style.display = 'block';
+    });
+
+    function editEntry(index){
+      if (!currentFileName) return alert('No report selected.');
+      const pass = prompt('Enter admin password:');
+      if (pass !== '123') return alert('Incorrect password.');
+      const data = currentFiles[currentFileName];
+      if (!data || !data[index]) return alert('Entry not found.');
+      const entry = data[index];
+      if (entry.closed) return alert('This entry is closed and cannot be edited.');
+
+      isAddMode = false;
+      editIndex = index;
+      document.getElementById('modalTitle').textContent = 'Edit Entry';
+      document.getElementById('saveBtn').textContent = 'Save';
+      document.getElementById('editDate').value = entry.date || '';
+      document.getElementById('editFarm').value = entry.farm || '';
+      document.getElementById('edit333').value = entry['333'] || '';
+      document.getElementById('edit332').value = entry['332'] || '';
+      document.getElementById('edit331').value = entry['331'] || '';
+      document.getElementById('edit330').value = entry['330'] || '';
+      document.getElementById('edit313B').value = entry['313-B'] || '';
+      document.getElementById('overlay').style.display = 'block';
+      document.getElementById('editModal').style.display = 'block';
+    }
+
+    function closeModal(){
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    // Save Add or Edit
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentFileName) return alert('No report selected.');
+
+      const obj = {
+        date: document.getElementById('editDate').value.trim(),
+        farm: document.getElementById('editFarm').value.trim(),
+        '333': document.getElementById('edit333').value.trim(),
+        '332': document.getElementById('edit332').value.trim(),
+        '331': document.getElementById('edit331').value.trim(),
+        '330': document.getElementById('edit330').value.trim(),
+        '313-B': document.getElementById('edit313B').value.trim(),
+        closed: false
+      };
+
+      const pass = prompt('Enter admin password:');
+      if (pass !== '123') return alert('Incorrect password.');
+
+      showLoading(true);
+      try {
+        if (isAddMode) {
+          currentFiles[currentFileName].push(obj);
+        } else {
+          const entry = currentFiles[currentFileName][editIndex];
+          if (!entry) { alert('Entry not found.'); showLoading(false); return; }
+          if (entry.closed) { alert('Cannot edit closed entry.'); showLoading(false); return; }
+          // update fields
+          Object.assign(entry, obj);
+        }
+        // persist
+        await supabase.from('feed_reports').update({ data: currentFiles[currentFileName] }).eq('filename', currentFileName);
+        // re-render
+        renderReport(currentFiles[currentFileName]);
+        updateFileList();
+        updateFileSelector();
+      } catch(err) {
+        console.error(err);
+        alert('Error saving to Supabase.');
+      }
+      showLoading(false);
+      closeModal();
+    });
+
+    // === Remove entry ===
+    async function removeEntry(index){
+      if (!currentFileName) return alert('No report selected.');
+      const pass = prompt('Enter admin password:');
+      if (pass !== '123') return alert('Incorrect password.');
+      if (!confirm('Delete this entry?')) return;
+      const data = currentFiles[currentFileName];
+      if (!data || !data[index]) return alert('Entry not found.');
+      if (data[index].closed) return alert('Cannot remove a closed entry.');
+
+      data.splice(index,1);
+      showLoading(true);
+      try {
+        await supabase.from('feed_reports').update({ data }).eq('filename', currentFileName);
+        renderReport(data);
+      } catch(err){ console.error(err); alert('Error removing entry.'); }
+      showLoading(false);
+    }
+
+    // === Close Day (mark all entries for that date as closed) ===
+    async function closeDay(date){
+      if (!currentFileName) return alert('No report selected.');
+      const pass = prompt('Enter admin password to close day:');
+      if (pass !== '123') return alert('Incorrect password.');
+      if (!confirm(`Close all entries for ${date}? This will lock them from editing.`)) return;
+
+      const data = currentFiles[currentFileName];
+      let changed = false;
+      data.forEach(entry => { if ((entry.date||'') === date && !entry.closed) { entry.closed = true; changed = true; }});
+      if (!changed) return alert('Nothing to close for this date.');
+
+      showLoading(true);
+      try {
+        await supabase.from('feed_reports').update({ data }).eq('filename', currentFileName);
+        renderReport(data);
+      } catch(err){ console.error(err); alert('Error closing day.'); }
+      showLoading(false);
+      alert('Day closed. Totals are finalized and entries are locked.');
+    }
+
+    // === Backup current file (JSON) ===
+    document.getElementById('backupCurrentBtn').addEventListener('click', () => {
+      if (!currentFileName) return alert('No report selected.');
+      const data = currentFiles[currentFileName];
+      if (!data) return alert('No data to backup.');
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${currentFileName.replace(/\.[^/.]+$/,'')}-backup.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // === Export CSV (current file) ===
+    document.getElementById('csvBtn').addEventListener('click', () => {
+      if (!currentFileName) return alert('No report selected.');
+      const data = currentFiles[currentFileName];
+      if (!data || !data.length) return alert('No data to export.');
+      const csvRows = [];
+      // header
+      csvRows.push(['DATE','FARM','333','332','331','330','313-B','STATUS'].join(','));
+      // group by date and include a total row per date
+      const groups = {};
+      data.forEach(row => { const d = row.date || 'Unknown Date'; (groups[d]||(groups[d]=[])).push(row); });
+      Object.keys(groups).sort().forEach(date => {
+        groups[date].forEach(r => {
+          csvRows.push([
+            `"${(r.date||'')}"`,
+            `"${(r.farm||'')}"`,
+            `${r['333']||''}`,
+            `${r['332']||''}`,
+            `${r['331']||''}`,
+            `${r['330']||''}`,
+            `${r['313-B']||''}`,
+            `${r.closed ? 'CLOSED' : 'OPEN'}`
+          ].join(','));
+        });
+        // totals
+        const totals = FIELDS.map(f => groups[date].reduce((s,e)=> s + (parseFloat(e[f])||0),0));
+        csvRows.push([`"${date}"`,'"TOTAL"',...totals.map(t=>t),'"-"' ].join(','));
+      });
+
+      const blob = new Blob([csvRows.join('\n')], { type:'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${currentFileName.replace(/\.[^/.]+$/,'')}-export.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // === Print report ===
+    document.getElementById('printBtn').addEventListener('click', () => {
+      if (!currentFileName) return alert('No report selected.');
+      const data = currentFiles[currentFileName];
+      if (!data || !data.length) return alert('No data to print.');
+
+      const html = generatePrintHTML(data, currentFileName);
+      const w = window.open('', '_blank', 'width=900,height=700');
+      w.document.write(html);
+      w.document.close();
+      setTimeout(()=> { w.focus(); w.print(); }, 350);
+    });
+
+    function generatePrintHTML(data, filename){
+      // group by date
+      const groups = {};
+      data.forEach(r => { const d = r.date||'Unknown Date'; (groups[d]||(groups[d]=[])).push(r); });
+      const rowsHtml = Object.keys(groups).sort().map(date => {
+        const items = groups[date].map(r => `<tr>
+          <td>${escapeHtml(r.date||'')}</td>
+          <td>${escapeHtml(r.farm||'')}</td>
+          <td>${escapeHtml(r['333']||'')}</td>
+          <td>${escapeHtml(r['332']||'')}</td>
+          <td>${escapeHtml(r['331']||'')}</td>
+          <td>${escapeHtml(r['330']||'')}</td>
+          <td>${escapeHtml(r['313-B']||'')}</td>
+          <td>${r.closed ? 'CLOSED' : 'OPEN'}</td>
+        </tr>`).join('');
+        const totals = FIELDS.map(f => groups[date].reduce((s,e)=> s + (parseFloat(e[f])||0), 0));
+        const totalRow = `<tr style="font-weight:700;background:#f3f3f3">
+          <td colspan="2">TOTAL (${escapeHtml(date)})</td>
+          <td>${totals[0]}</td><td>${totals[1]}</td><td>${totals[2]}</td><td>${totals[3]}</td><td>${totals[4]}</td><td>-</td>
+        </tr>`;
+        return `<tbody>${items}${totalRow}</tbody>`;
+      }).join('');
+
+      // header + footer text
+      const headerHtml = `
+        <div style="text-align:center;margin-bottom:8px">
+          <div style="font-size:20px;font-weight:800">🐄 ITTIFAQ FEEDS</div>
+          <div style="font-size:14px;color:#333;margin-top:4px">Feed Report</div>
+          <div style="font-size:12px;color:#555;margin-top:6px">File: ${escapeHtml(filename)} &nbsp; | &nbsp; Printed: ${new Date().toLocaleString()}</div>
+        </div>
+      `;
+
+      const footerHtml = `
+        <div style="width:100%;text-align:center;margin-top:18px;color:#555;font-size:12px">
+          System developed by Aoun Ahmed
+        </div>
+      `;
+
+      const style = `
+        <style>
+          body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:18px}
+          table{width:100%;border-collapse:collapse;margin-top:12px}
+          th,td{border:1px solid #bbb;padding:8px;text-align:center;font-size:12px}
+          th{background:#f1f1f1}
+          tbody tr:nth-child(even){background:#fafafa}
+          @media print {
+            footer{position:fixed;bottom:12px;width:100%}
+          }
+        </style>
+      `;
+
+      return `<!doctype html><html><head><meta charset="utf-8"><title>Print - ${escapeHtml(filename)}</title>${style}</head><body>
+        ${headerHtml}
+        <table>
+          <thead>
+            <tr><th>DATE</th><th>FARM NAME</th><th>333</th><th>332</th><th>331</th><th>330</th><th>313-B</th><th>STATUS</th></tr>
+          </thead>
+          ${rowsHtml}
+        </table>
+        ${footerHtml}
+      </body></html>`;
+    }
+
+    // === Clear all data ===
+    document.getElementById('clearBtn').addEventListener('click', async () => {
+      const pass = prompt('Enter admin password to clear all:');
+      if (pass !== '123') return alert('Incorrect password.');
+      if (!confirm('Are you sure you want to permanently delete all reports?')) return;
+      showLoading(true);
+      try {
+        await supabase.from('feed_reports').delete().neq('filename','');
+        currentFiles = {};
+        updateFileList();
+        updateFileSelector();
+        alert('All data cleared.');
+      } catch(err){ console.error(err); alert('Error clearing data.'); }
+      showLoading(false);
+    });
+
+    // Expose some functions to global scope used by onclick attributes
+    window.editEntry = editEntry;
+    window.removeEntry = removeEntry;
+    window.closeDay = closeDay;
+
+  </script>
 </body>
 </html>
