@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Farm Feed Report Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header>
+    <h1>🐄 Farm Feed Report Manager</h1>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tablink active" onclick="openTab(event, 'uploadTab')">Upload / Backup</button>
+    <button class="tablink" onclick="openTab(event, 'reportTab')">Feed Report</button>
+    <button class="tablink" onclick="openTab(event, 'adminTab')">Admin</button>
+  </div>
+
+  <!-- Upload / Backup Tab -->
+  <div id="uploadTab" class="tabcontent active">
+    <h2>Upload & Manage Reports</h2>
+    <input type="file" id="fileInput" multiple accept=".json" />
+    <div id="fileList"></div>
+    <button id="backupBtn">Download All Backups</button>
+  </div>
+
+  <!-- Feed Report Tab -->
+  <div id="reportTab" class="tabcontent">
+    <h2>Feed Report Viewer / Editor</h2>
+    <label>Select Report:</label>
+    <select id="fileSelector"></select>
+    <div id="reportWrapper">
+      <table id="reportTable" style="display:none;">
+        <thead>
+          <tr>
+            <th>DATE</th>
+            <th>FARM NAME</th>
+            <th>333</th>
+            <th>332</th>
+            <th>331</th>
+            <th>330</th>
+            <th>313-B</th>
+            <th class="action-column">ACTION</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+  </div>
+
+  <!-- Admin Tab -->
+  <div id="adminTab" class="tabcontent">
+    <h2>Admin Controls</h2>
+    <button id="clearBtn">Clear All Data</button>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="overlay"></div>
+  <div id="editModal">
+    <h3>Edit Entry</h3>
+    <form id="editForm">
+      <input type="text" id="editDate" placeholder="Date" required />
+      <input type="text" id="editFarm" placeholder="Farm Name" required />
+      <input type="number" step="any" id="edit333" placeholder="333" />
+      <input type="number" step="any" id="edit332" placeholder="332" />
+      <input type="number" step="any" id="edit331" placeholder="331" />
+      <input type="number" step="any" id="edit330" placeholder="330" />
+      <input type="number" step="any" id="edit313B" placeholder="313-B" />
+      <button type="submit">Save</button>
+      <button type="button" onclick="closeModal()">Cancel</button>
+    </form>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p>Processing...</p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
