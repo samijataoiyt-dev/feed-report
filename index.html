@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Ittifaq Feeds — Manager (Supabase)</title>
   <style>
     :root{--bg:#f7f8fb;--card:#fff;--muted:#6b7280;--accent:#0f62fe}
@@ -35,9 +35,7 @@
     .danger{background:#ef4444}
     .gap-small{height:8px}
     @media (max-width:820px){ .form-grid{grid-template-columns:1fr} }
-    /* small login modal */
     #loginModal .modal{width:360px}
-    /* visual for disabled upload */
     .disabled{opacity:0.5;pointer-events:none}
   </style>
 </head>
@@ -59,7 +57,7 @@
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <label class="ghost" id="uploadLabel" style="padding:8px 10px;border-radius:8px;border:1px dashed #e2e8f0;cursor:pointer">
-          <input id="fileInput" type="file" accept="application/json" />
+          <input id="fileInput" type="file" accept="application/json"/>
           Upload JSON
         </label>
         <button id="exportBtn" class="ghost">Export JSON</button>
@@ -84,10 +82,10 @@
       <h3>Login</h3>
       <div style="margin-top:8px">
         <label>User ID</label>
-        <input id="loginId" type="text" />
+        <input id="loginId" type="text"/>
         <div class="gap-small"></div>
         <label>Password</label>
-        <input id="loginPass" type="password" />
+        <input id="loginPass" type="password"/>
         <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
           <button id="loginCancel" class="ghost">Cancel</button>
           <button id="loginSubmit">Login</button>
@@ -104,30 +102,30 @@
         <div class="form-grid" style="margin-top:8px">
           <div>
             <label>Date</label>
-            <input type="date" id="fDateNative" />
-            <input type="text" id="fDate" placeholder="08 Oct 2025" required />
+            <input type="date" id="fDateNative"/>
+            <input type="text" id="fDate" placeholder="08 Oct 2025" required/>
           </div>
           <div>
             <label>Farm</label>
-            <input type="text" id="fFarm" required />
+            <input type="text" id="fFarm" required/>
           </div>
           <div>
-            <label>333</label><input type="number" id="f333" min="0" step="1" />
+            <label>333</label><input type="number" id="f333" min="0" step="1"/>
           </div>
           <div>
-            <label>332</label><input type="number" id="f332" min="0" step="1" />
+            <label>332</label><input type="number" id="f332" min="0" step="1"/>
           </div>
           <div>
-            <label>3331</label><input type="number" id="f3331" min="0" step="1" />
+            <label>3331</label><input type="number" id="f3331" min="0" step="1"/>
           </div>
           <div>
-            <label>330</label><input type="number" id="f330" min="0" step="1" />
+            <label>330</label><input type="number" id="f330" min="0" step="1"/>
           </div>
           <div>
-            <label>313-A</label><input type="number" id="f313A" min="0" step="1" />
+            <label>313-A</label><input type="number" id="f313A" min="0" step="1"/>
           </div>
           <div>
-            <label>313-B</label><input type="number" id="f313B" min="0" step="1" />
+            <label>313-B</label><input type="number" id="f313B" min="0" step="1"/>
           </div>
         </div>
         <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
@@ -144,19 +142,18 @@
 
   <script>
   /*********************************************************
-   * Config - REPLACE with your Supabase values below
+   * Config - put real values if you want cloud enabled
    *********************************************************/
   const SUPABASE_URL = 'https://zxiastbukdpplukpvnas.supabase.co'; // <-- replace
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aWFzdGJ1a2RwcGx1a3B2bmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5NTg1NTMsImV4cCI6MjA3NTUzNDU1M30.GqkeYMjcNTxkSj-B5nScGQlqFFZTQWELWSCPz9lwgDU';               // <-- replace
-
-  const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = (window.supabase && window.supabase.createClient) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
   /*********************************************************/
 
   // App state
   let state = { data: [], user: null, uploadedByAdmin: false };
   let editIndex = null;
 
-  // credentials (you gave these)
+  // credentials
   const CREDENTIALS = {
     admin: { id: 'admin22', pass: '12345', role: 'admin' },
     employee: { id: 'user22', pass: '23456', role: 'employee' }
@@ -186,6 +183,7 @@
   const modal = document.getElementById('modal');
   const entryForm = document.getElementById('entryForm');
   const cancelBtn = document.getElementById('cancelBtn');
+
   // fields
   const fDateNative = document.getElementById('fDateNative');
   const fDate = document.getElementById('fDate');
@@ -203,7 +201,6 @@
   function isoToDisplay(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return pad(d.getDate())+' '+monthNames[d.getMonth()]+' '+d.getFullYear(); }
   function parseAnyToDisplay(s){
     if(!s) return '';
-    // already '08 Oct 2025'
     if(/^[0-3]\d\s+[A-Za-z]{3}\s+\d{4}$/.test(s)) return s;
     if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return isoToDisplay(s);
     const m = s.match(/^(\d{1,2})[-\/]?(\d{1,2})[-\/]?(\d{4})$/);
@@ -222,13 +219,12 @@
   fDateNative.addEventListener('change', ()=> fDate.value = isoToDisplay(fDateNative.value));
   fDate.addEventListener('input', ()=> { const iso = displayToISO(fDate.value); if(iso) fDateNative.value = iso; });
 
-  // login
+  // login logic
   loginBtn.addEventListener('click', ()=>{ loginModal.style.display='flex'; loginId.value=''; loginPass.value=''; });
   loginCancel.addEventListener('click', ()=>{ loginModal.style.display='none'; });
   loginSubmit.addEventListener('click', ()=> {
     const id = (loginId.value||'').trim(), pass = (loginPass.value||'').trim();
     if(!id || !pass) return alert('Enter id & password');
-    // simple client-side check per your supplied credentials
     if(id===CREDENTIALS.admin.id && pass===CREDENTIALS.admin.pass){
       setUser({ id: id, role: 'admin' });
     } else if(id===CREDENTIALS.employee.id && pass===CREDENTIALS.employee.pass){
@@ -238,8 +234,7 @@
     }
     loginModal.style.display='none';
   });
-
-  logoutBtn.addEventListener('click', ()=>{ setUser(null); });
+  logoutBtn.addEventListener('click', ()=> setUser(null));
 
   function setUser(u){
     state.user = u;
@@ -256,15 +251,12 @@
   }
 
   function refreshControls(){
-    // Only admin may upload/replace JSON
-    if(state.user && state.user.role==='admin' && !state.uploadedByAdmin){
+    // Upload enabled only when logged in as admin and dataset hasn't been locked by an earlier admin upload (or admin can re-upload)
+    if(state.user && state.user.role==='admin'){
       uploadLabel.classList.remove('disabled');
     } else {
       uploadLabel.classList.add('disabled');
     }
-    // If uploadedByAdmin true: only admin can re-upload (keep disabled for employee)
-    if(!state.user) uploadLabel.classList.add('disabled');
-    // cloud save allowed for both (button visible always)
   }
 
   // file upload (admin only)
@@ -276,13 +268,12 @@
     }
     const f = e.target.files[0]; if(!f) return;
     const reader = new FileReader();
-    reader.onload = ()=> {
+    reader.onload = () => {
       try {
         const parsed = JSON.parse(reader.result);
         if(!Array.isArray(parsed)) throw new Error('JSON must be an array');
-        // load, normalize dates
         const out = parsed.map(r=>({
-          Date: parseAnyToDisplay(r.Date||r.date||r.D||''),
+          Date: parseAnyToDisplay(r.Date || r.date || r.D || ''),
           Farm: String(r.Farm || r.farm || r.F || '').trim(),
           '333': numOrNull(r['333']),
           '332': numOrNull(r['332']),
@@ -292,10 +283,10 @@
           '313-B': numOrNull(r['313-B']||r['313B'])
         }));
         state.data = out;
-        state.uploadedByAdmin = true; // lock upload control to admin
+        state.uploadedByAdmin = true;
         saveLocal();
         render();
-        alert('JSON loaded. Note: uploaded dataset is admin-controlled.');
+        alert('JSON loaded. Uploaded dataset is admin-controlled.');
       } catch(err){
         alert('Invalid JSON: '+err.message);
       }
@@ -304,12 +295,11 @@
     fileInput.value = '';
   });
 
-  // helper
   function numOrNull(v){ if(v===null||v===undefined||v==='') return null; const n=Number(v); return isNaN(n)?null:n; }
 
-  // add / edit
+  // add / edit handlers
   addBtn.addEventListener('click', ()=> openModalForAdd());
-  cancelBtn.addEventListener('click', ()=> closeModal());
+  cancelBtn.addEventListener('click', ()=> { modal.style.display='none'; editIndex=null; });
 
   function openModalForAdd(){
     editIndex = null;
@@ -323,7 +313,7 @@
     editIndex = idx;
     document.getElementById('modalTitle').textContent='Edit Entry';
     const e = state.data[idx];
-    fDate.value = e.Date||''; const iso = displayToISO(e.Date||''); fDateNative.value = iso||'';
+    fDate.value = e.Date || ''; const iso = displayToISO(e.Date||''); fDateNative.value = iso||'';
     fFarm.value = e.Farm||'';
     f333.value = e['333'] ?? '';
     f332.value = e['332'] ?? '';
@@ -349,7 +339,6 @@
     };
     if(!entry.Date){ return alert('Please provide a valid date'); }
     if(editIndex===null){
-      // merge if same date+farm
       const idx = state.data.findIndex(r=>r.Date===entry.Date && r.Farm===entry.Farm);
       if(idx!==-1){
         ['333','332','3331','330','313-A','313-B'].forEach(k=>{ state.data[idx][k] = (state.data[idx][k]||0) + (entry[k]||0); });
@@ -360,9 +349,7 @@
     saveLocal(); modal.style.display='none'; editIndex=null; render();
   });
 
-  // delete (only admin) implemented in render per-row
-
-  // export JSON (uses display date format)
+  // export JSON
   exportBtn.addEventListener('click', ()=>{
     const out = state.data.map(r=>({
       Date: r.Date,
@@ -378,9 +365,8 @@
     const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download='report.json'; a.click(); URL.revokeObjectURL(url);
   });
 
-  // PDF download
+  // PDF
   pdfBtn.addEventListener('click', downloadPDF);
-
   async function downloadPDF(){
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
@@ -396,11 +382,9 @@
     headers.forEach((h,idx)=>{ pdf.text(h, x+2, y); x+=colWidths[idx]; });
     y+=16;
 
-    // group by date for PDF same as screen
     const groups = groupByDate(state.data);
     for(const dt of Object.keys(groups).sort((a,b)=>dateToTimestamp(a)-dateToTimestamp(b))){
       const rows = groups[dt];
-      // date header line in PDF
       pdf.setFontSize(10); pdf.text(dt, startX, y); y+=14;
       pdf.setFontSize(9);
       rows.forEach(r=>{
@@ -410,7 +394,6 @@
         y+=14;
         if(y>750){ pdf.addPage(); y=40; }
       });
-      // group totals
       const tot = groupTotals(rows);
       x = startX; pdf.setFontSize(9); pdf.text('Group totals:', x+2, y);
       x += colWidths[0]+colWidths[1];
@@ -419,23 +402,20 @@
       if(y>700){ pdf.addPage(); y=40; }
     }
 
-    // grand totals
     const grand = computeTotals();
-    pdf.setFontSize(11); pdf.text('Grand Totals:', startX, y); x = startX + colWidths[0] + colWidths[1];
+    pdf.setFontSize(11); pdf.text('Grand Totals:', startX, y);
+    x = startX + colWidths[0] + colWidths[1];
     ['333','332','3331','330','313-A','313-B'].forEach((k,idx)=>{ pdf.text(String(grand[k]||''), x+2, y); x+=colWidths[idx+2]; });
     const filename = `FeedReport_${pad(now.getDate())}-${monthNames[now.getMonth()]}-${now.getFullYear()}.pdf`;
     pdf.save(filename);
   }
 
-  // Cloud save - upserts into Supabase table 'feed_reports'
+  // Cloud save (requires valid SUPABASE_URL & KEY)
   cloudSaveBtn.addEventListener('click', async ()=>{
-    if(!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes('your-project')){
-      return alert('Please configure SUPABASE_URL and SUPABASE_ANON_KEY in the HTML before using Save to Cloud.');
-    }
+    if(!supabase) return alert('Configure SUPABASE_URL and SUPABASE_ANON_KEY at top of file to enable cloud save.');
     if(!state.user) return alert('Please login first to save to cloud.');
     if(!state.data.length) return alert('No data to save.');
 
-    // Prepare rows: one DB row per data row
     const rows = state.data.map(r=>({
       report_date: r.Date,
       farm: r.Farm,
@@ -448,7 +428,6 @@
       created_by: state.user.id
     }));
 
-    // try bulk insert
     try {
       const { data, error } = await supabase.from('feed_reports').insert(rows);
       if(error) throw error;
@@ -459,7 +438,7 @@
     }
   });
 
-  // rendering & helpers
+  // rendering
   function render(){
     tableArea.innerHTML = '';
     if(!state.data.length){ empty.style.display='block'; reportDateDom.textContent='Report Generated on -'; refreshControls(); return; }
@@ -467,11 +446,9 @@
     refreshControls();
     const now = new Date(); reportDateDom.textContent = 'Report Generated on ' + pad(now.getDate())+' '+monthNames[now.getMonth()]+' '+now.getFullYear();
 
-    // group by Date
     const groups = groupByDate(state.data);
     const container = document.createElement('div');
 
-    // for each date group
     Object.keys(groups).sort((a,b)=>dateToTimestamp(a)-dateToTimestamp(b)).forEach(date=>{
       const grp = groups[date];
       const box = document.createElement('div'); box.className='group';
@@ -496,7 +473,7 @@
                         <td>${displayVal(row['313-B'])}</td>
                         <td class="actions"></td>`;
         const actions = tr.querySelector('.actions');
-        const globalIndex = state.data.findIndex(r=>r.Date===row.Date && r.Farm===row.Farm && r['333']===row['333'] && r['332']===row['332']); // best-effort
+        const globalIndex = state.data.findIndex(r=>r.Date===row.Date && r.Farm===row.Farm && r['333']===row['333'] && r['332']===row['332']);
         const editBtn = document.createElement('button'); editBtn.textContent='Edit'; editBtn.className='ghost';
         editBtn.addEventListener('click', ()=> openModalForEdit(globalIndex));
         actions.appendChild(editBtn);
@@ -504,7 +481,6 @@
           const delBtn = document.createElement('button'); delBtn.textContent='Delete'; delBtn.className='danger';
           delBtn.addEventListener('click', ()=> {
             if(!confirm('Delete this entry?')) return;
-            // remove the first matching entry
             const idx = state.data.findIndex(r=>r.Date===row.Date && r.Farm===row.Farm && r['333']===row['333'] && r['332']===row['332']);
             if(idx>=0) state.data.splice(idx,1);
             saveLocal(); render();
@@ -515,7 +491,6 @@
       });
       table.appendChild(tbody);
 
-      // group totals row
       const gt = groupTotals(grp);
       const tf = document.createElement('div');
       tf.className='tiny';
@@ -526,7 +501,6 @@
       container.appendChild(box);
     });
 
-    // grand totals at the bottom
     const grand = computeTotals();
     const grandBox = document.createElement('div'); grandBox.style.marginTop='8px';
     const gtbl = document.createElement('table'); gtbl.innerHTML = `<thead><tr><th style="width:220px">Grand Totals</th><th>333</th><th>332</th><th>3331</th><th>330</th><th>313-A</th><th>313-B</th></tr></thead>`;
@@ -548,46 +522,31 @@
   }
   function groupTotals(rows){
     const t={'333':0,'332':0,'3331':0,'330':0,'313-A':0,'313-B':0};
-    rows.forEach(r=>{ Object.keys(t).forEach(k=> t[k] += r[k]||0 ); });
+    rows.forEach(r=>{ Object.keys(t).forEach(k=> t[k] += (r[k]||0) ); });
     return t;
   }
   function computeTotals(){ return groupTotals(state.data); }
-  function dateToTimestamp(display){ const iso = displayToISO(display); if(iso) return new Date(iso).getTime(); const d=new Date(display); return isNaN(d)?0:d.getTime(); }
+  function dateToTimestamp(display){
+    const iso = displayToISO(display);
+    if(iso) return new Date(iso).getTime();
+    const d = new Date(display); return isNaN(d)?0:d.getTime();
+  }
   function displayToISO(display){
     const m = display.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
     if(m){ const day=Number(m[1]), mon=monthNames.indexOf(m[2]), yr=Number(m[3]); if(mon>=0) return `${yr}-${String(mon+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`; }
     if(/^\d{4}-\d{2}-\d{2}$/.test(display)) return display;
     return null;
   }
-  function dateToTimestamp(display){ const iso = displayToISO(display); if(iso) return new Date(iso).getTime(); const d=new Date(display); return isNaN(d)?0:d.getTime(); }
 
   function displayVal(v){ return (v===null||v===undefined)?'':v; }
   function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function saveLocal(){ try{ localStorage.setItem('report_data', JSON.stringify(state)); }catch(e){} }
-  function loadLocal(){ try{ const raw = localStorage.getItem('report_data'); if(!raw) return; const parsed = JSON.parse(raw); if(parsed && parsed.data) state = parsed; }catch(e){} }
+  function saveLocal(){ try{ localStorage.setItem('report_state_v1', JSON.stringify(state)); }catch(e){} }
+  function loadLocal(){ try{ const raw = localStorage.getItem('report_state_v1'); if(!raw) return; const parsed = JSON.parse(raw); if(parsed && parsed.data) state = parsed; }catch(e){} }
 
-  // init from local
+  // init
   loadLocal();
   render();
-
-  // utility: remove duplicates rough
-  function findRowIndex(row){ return state.data.findIndex(r=>r.Date===row.Date && r.Farm===row.Farm); }
-
-  // Save to cloud SQL note:
-  // Use the SQL in the instructions to create table:
-  // create table public.feed_reports ( id bigint generated by default as identity primary key, report_date text, farm text, val_333 integer, val_332 integer, val_3331 integer, val_330 integer, val_313_a integer, val_313_b integer, created_by text, created_at timestamptz default now());
-  // After table created, cloud save will insert rows.
-
-  // helper for PDF group totals & ordering
-  function dateToTimestamp(display){
-    const iso = displayToISO(display);
-    if(iso) return new Date(iso).getTime();
-    const d = new Date(display);
-    return isNaN(d)?0:d.getTime();
-  }
-
-  // ensure controls according to login status
   refreshControls();
 
   </script>
