@@ -1,84 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Farm Feed Report Manager</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Farm Feed Report Manager — Dashboard</title>
+
+  <!-- Supabase client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>🐄 Farm Feed Report Manager</h1>
-  </header>
+  <div id="app" class="layout">
 
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tablink active" onclick="openTab(event, 'uploadTab')">Upload / Backup</button>
-    <button class="tablink" onclick="openTab(event, 'reportTab')">Feed Report</button>
-    <button class="tablink" onclick="openTab(event, 'adminTab')">Admin</button>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>🐄 Feed Manager</h1>
+      </div>
+
+      <div id="authSection" class="auth-section">
+        <!-- shown when logged out -->
+        <div id="authForms">
+          <div class="card">
+            <h3>Sign in</h3>
+            <input id="loginEmail" type="email" placeholder="Email" />
+            <input id="loginPassword" type="password" placeholder="Password" />
+            <button id="signInBtn" class="btn primary">Sign in</button>
+            <p class="small">Don't have an account? <a id="showSignup" href="#">Sign up</a></p>
+          </div>
+
+          <div id="signupCard" class="card hidden">
+            <h3>Create account</h3>
+            <input id="signupEmail" type="email" placeholder="Email" />
+            <input id="signupPassword" type="password" placeholder="Password (≥ 6 chars)" />
+            <button id="signUpBtn" class="btn primary">Sign up</button>
+            <p class="small">Have an account? <a id="showSignin" href="#">Sign in</a></p>
+          </div>
+        </div>
+
+        <!-- shown when logged in -->
+        <div id="userPanel" class="card hidden">
+          <p id="userEmail" class="muted"></p>
+          <button id="signOutBtn" class="btn outline">Sign out</button>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-btn active" data-target="uploadTab">Upload / Backup</button>
+        <button class="nav-btn" data-target="reportTab">Feed Report</button>
+        <button class="nav-btn" data-target="adminTab">Admin</button>
+      </nav>
+
+      <footer class="sidebar-foot">
+        <small>Hosted via GitHub Pages · Supabase backend</small>
+      </footer>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <!-- Top bar -->
+      <header class="topbar">
+        <div>
+          <h2 id="pageTitle">Upload / Backup</h2>
+        </div>
+        <div id="topActions" class="top-actions">
+          <span id="statusText" class="muted"></span>
+        </div>
+      </header>
+
+      <!-- Content panels -->
+      <section id="uploadTab" class="panel active">
+        <div class="grid">
+          <div class="card">
+            <h3>Upload JSON reports</h3>
+            <input id="fileInput" type="file" accept=".json" multiple />
+            <p class="small muted">You can upload multiple .json files. Filenames are used as unique keys in Supabase.</p>
+          </div>
+
+          <div class="card">
+            <h3>Loaded files</h3>
+            <div id="fileList" class="file-list">
+              <p class="muted">No files loaded.</p>
+            </div>
+            <div class="row">
+              <button id="downloadAllBtn" class="btn">Download All (Backups)</button>
+              <button id="saveAllBtn" class="btn" title="Saves all in-memory files to Supabase">Save All</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="reportTab" class="panel">
+        <div class="card">
+          <div class="row space-between">
+            <div>
+              <label for="fileSelector">Select report</label>
+              <select id="fileSelector"></select>
+            </div>
+            <div>
+              <button id="refreshBtn" class="btn">Refresh from Cloud</button>
+              <button id="saveChangesBtn" class="btn primary" title="Save current open report to Supabase">Save Changes</button>
+            </div>
+          </div>
+
+          <div id="reportWrapper" class="report-wrapper">
+            <table id="reportTable" class="report-table" style="display:none;">
+              <thead>
+                <tr>
+                  <th>DATE</th>
+                  <th>FARM NAME</th>
+                  <th>333</th>
+                  <th>332</th>
+                  <th>331</th>
+                  <th>330</th>
+                  <th>313-B</th>
+                  <th class="action-column">ACTION</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="adminTab" class="panel">
+        <div class="card">
+          <h3>Admin</h3>
+          <p class="muted">Clear all stored reports (irreversible).</p>
+          <div class="row">
+            <button id="clearAllBtn" class="btn danger">Clear All (Admin)</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Edit Modal -->
+      <div id="overlay" class="overlay hidden"></div>
+      <div id="editModal" class="modal hidden">
+        <h3>Edit entry</h3>
+        <form id="editForm" class="form">
+          <input id="editDate" type="text" placeholder="Date" required />
+          <input id="editFarm" type="text" placeholder="Farm Name" required />
+          <input id="edit333" type="number" step="any" placeholder="333" />
+          <input id="edit332" type="number" step="any" placeholder="332" />
+          <input id="edit331" type="number" step="any" placeholder="331" />
+          <input id="edit330" type="number" step="any" placeholder="330" />
+          <input id="edit313B" type="number" step="any" placeholder="313-B" />
+          <div class="row">
+            <button type="submit" class="btn primary">Save</button>
+            <button type="button" id="cancelEdit" class="btn outline">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Toast -->
+      <div id="toast" class="toast hidden"></div>
+
+      <!-- Loading overlay -->
+      <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <div class="muted">Processing...</div>
+      </div>
+    </main>
   </div>
 
-  <!-- Upload / Backup Tab -->
-  <div id="uploadTab" class="tabcontent active">
-    <h2>Upload & Manage Reports</h2>
-    <input type="file" id="fileInput" multiple accept=".json" />
-    <div id="fileList"></div>
-    <button id="backupBtn">Download All Backups</button>
-  </div>
-
-  <!-- Feed Report Tab -->
-  <div id="reportTab" class="tabcontent">
-    <h2>Feed Report Viewer / Editor</h2>
-    <label>Select Report:</label>
-    <select id="fileSelector"></select>
-    <div id="reportWrapper">
-      <table id="reportTable" style="display:none;">
-        <thead>
-          <tr>
-            <th>DATE</th>
-            <th>FARM NAME</th>
-            <th>333</th>
-            <th>332</th>
-            <th>331</th>
-            <th>330</th>
-            <th>313-B</th>
-            <th class="action-column">ACTION</th>
-          </tr>
-        </thead>
-      </table>
-    </div>
-  </div>
-
-  <!-- Admin Tab -->
-  <div id="adminTab" class="tabcontent">
-    <h2>Admin Controls</h2>
-    <button id="clearBtn">Clear All Data</button>
-  </div>
-
-  <!-- Edit Modal -->
-  <div id="overlay"></div>
-  <div id="editModal">
-    <h3>Edit Entry</h3>
-    <form id="editForm">
-      <input type="text" id="editDate" placeholder="Date" required />
-      <input type="text" id="editFarm" placeholder="Farm Name" required />
-      <input type="number" step="any" id="edit333" placeholder="333" />
-      <input type="number" step="any" id="edit332" placeholder="332" />
-      <input type="number" step="any" id="edit331" placeholder="331" />
-      <input type="number" step="any" id="edit330" placeholder="330" />
-      <input type="number" step="any" id="edit313B" placeholder="313-B" />
-      <button type="submit">Save</button>
-      <button type="button" onclick="closeModal()">Cancel</button>
-    </form>
-  </div>
-
-  <!-- Loading Spinner -->
-  <div id="loadingOverlay">
-    <div class="spinner"></div>
-    <p>Processing...</p>
-  </div>
-
+  <!-- App script -->
   <script src="app.js"></script>
 </body>
 </html>
