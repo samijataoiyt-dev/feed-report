@@ -141,9 +141,11 @@
       <input id="edit331" placeholder="331" type="number" step="any" />
       <input id="edit330" placeholder="330" type="number" step="any" />
       <input id="edit313B" placeholder="313-B" type="number" step="any" />
+
       <div class="modal-actions">
         <button type="submit" id="saveBtn" class="add-btn">Save</button>
         <button type="button" onclick="closeModal()" style="background:#9aa3ad;color:#fff;padding:8px 12px;border-radius:8px">Cancel</button>
+         <button onclick="reopenDay()">Reopen Day</button>
       </div>
     </form>
   </div>
@@ -295,6 +297,12 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
           tr.innerHTML = cells.join('');
           tbody.appendChild(tr);
         });
+        // Reopen last closed day
+function reopenDay() {
+  localStorage.removeItem('dayClosed');
+  alert('Day reopened. You can now add or edit entries again.');
+  renderFeedReport(); // refresh UI
+}
 
         // total row + close button (if not already closed)
         const totalRow = document.createElement('tr');
