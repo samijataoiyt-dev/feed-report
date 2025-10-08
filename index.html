@@ -3,507 +3,593 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Farm Feed Report Manager — ITTIFAQ FEEDS</title>
-
-  <!-- minimal reset + styles -->
+  <title>Ittifaq Feeds — Manager (Supabase)</title>
   <style>
-    :root { --blue:#007bff; --danger:#dc3545; --green:#28a745; --teal:#17a2b8; }
-    body { font-family: Inter, system-ui, Arial, sans-serif; margin:20px; background:#f6f8fb; color:#222; }
-    header { text-align:center; margin-bottom:18px; }
-    header h1 { margin:0; font-size:22px; }
-    .tabs { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
-    .tablink { padding:8px 14px; border:0; background:#e6e9ee; border-radius:8px; cursor:pointer; font-weight:600; }
-    .tablink.active { background:var(--blue); color:#fff; }
-    .tabcontent { display:none; background:#fff; padding:18px; border-radius:10px; box-shadow:0 6px 18px rgba(10,20,40,0.06); }
-    .tabcontent.active { display:block; }
-    input[type=file] { padding:6px; }
-    #fileList div { margin-top:8px; padding:8px; background:#f0f7ff; border-radius:6px; display:inline-block; }
-    .report-controls { display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
-    .report-actions { margin-left:auto; display:flex; gap:8px; }
-    button { cursor:pointer; border:0; border-radius:8px; padding:8px 12px; font-weight:600; }
-    .print-btn { background:var(--green); color:white; }
-    .backup-btn { background:var(--teal); color:white; }
-    .add-btn { background:var(--blue); color:white; }
-    .clear-btn { background:var(--danger); color:white; }
-
-    #reportWrapper { overflow-x:auto; margin-top:8px; }
-    table { width:100%; border-collapse:collapse; font-size:13px; }
-    th, td { border:1px solid #d0d7df; padding:8px; text-align:center; }
-    th { background:#f1f5f9; font-weight:700; }
-    tr.total-row { font-weight:800; background:#fbfbfb; }
-    tr.closed-row td { opacity:0.65; }
-    .edit-btn, .remove-btn, .close-day-btn { padding:6px 8px; border-radius:6px; color:#fff; border:0; }
-    .edit-btn { background:var(--blue); }
-    .remove-btn { background:var(--danger); margin-left:6px; }
-    .close-day-btn { background:#6c757d; }
-    .disabled { opacity:0.5; pointer-events:none; }
-
-    /* Modal */
-    #overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9998; }
-    #editModal { display:none; position:fixed; z-index:9999; left:50%; top:50%; transform:translate(-50%,-50%); width:360px; background:#fff; padding:18px; border-radius:10px; box-shadow:0 12px 40px rgba(10,20,40,0.25); }
-    #editModal h3 { margin:0 0 10px 0; }
-    #editModal input { width:100%; padding:8px; margin-bottom:8px; border:1px solid #cfd8e3; border-radius:6px; }
-    .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
-
-    /* Loading overlay */
-    #loadingOverlay { display:none; position:fixed; inset:0; background:rgba(255,255,255,0.7); z-index:10000; text-align:center; padding-top:160px; }
-    .spinner { border:6px solid #eee; border-top:6px solid var(--blue); width:44px; height:44px; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 10px; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-
-    /* Print styles */
-    @media print {
-      body { margin:0; }
-      .tabs, .report-controls, #editModal, #overlay, #loadingOverlay { display:none !important; }
-      table { page-break-inside:auto; }
-      tr { page-break-inside:avoid; page-break-after:auto; }
-    }
-
-    /* small responsive tweak */
-    @media (max-width:520px) {
-      #editModal { width:92%; }
-      .report-actions { margin-left:0; width:100%; justify-content:space-between; }
-    }
-
+    :root{--bg:#f7f8fb;--card:#fff;--muted:#6b7280;--accent:#0f62fe}
+    *{box-sizing:border-box}
+    body{font-family:Inter,Segoe UI,Arial;margin:0;background:var(--bg);color:#111}
+    header{background:linear-gradient(90deg,#0f62fe22,#06b6d422);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+    h1{margin:0;font-size:18px}
+    .controls{display:flex;gap:8px;align-items:center}
+    .card{background:var(--card);margin:16px auto;max-width:1200px;padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(12,12,12,0.06)}
+    button{background:var(--accent);color:white;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+    button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(15,98,254,0.12)}
+    input[type=file]{display:none}
+    .row{display:flex;gap:12px;align-items:center}
+    .report-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+    .report-title{font-weight:700;font-size:16px}
+    .muted{color:var(--muted)}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:8px 6px;border-bottom:1px solid #eee;text-align:left;font-size:14px}
+    th{background:#fafafa;position:sticky;top:0}
+    .group{background:#fff;border-radius:8px;padding:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,0.03)}
+    .group-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .group-totals{font-weight:600}
+    .tiny{font-size:12px;color:var(--muted)}
+    .actions button{margin-right:6px}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(11,12,15,0.45);display:none;align-items:center;justify-content:center;padding:12px}
+    .modal{background:var(--card);width:660px;max-width:100%;padding:16px;border-radius:10px}
+    .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    label{font-size:13px}
+    input[type=text],input[type=date],input[type=number],select{width:100%;padding:8px;border-radius:6px;border:1px solid #e6e6e6}
+    .danger{background:#ef4444}
+    .gap-small{height:8px}
+    @media (max-width:820px){ .form-grid{grid-template-columns:1fr} }
+    /* small login modal */
+    #loginModal .modal{width:360px}
+    /* visual for disabled upload */
+    .disabled{opacity:0.5;pointer-events:none}
   </style>
-
-  <!-- Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header>
-    <h1>🐄 Farm Feed Report Manager</h1>
-    <div style="font-size:12px;color:#666;margin-top:6px">Powered by <strong>ITTIFAQ FEEDS</strong></div>
+    <h1>Ittifaq Feeds Manager</h1>
+    <div class="controls">
+      <div class="tiny">Logged as: <span id="currentUser">Not logged</span></div>
+      <button id="loginBtn" class="ghost">Login</button>
+      <button id="logoutBtn" class="ghost" style="display:none">Logout</button>
+    </div>
   </header>
 
-  <div class="tabs">
-    <button class="tablink active" onclick="openTab(event,'uploadTab')">Upload</button>
-    <button class="tablink" onclick="openTab(event,'reportTab')">Feed Report</button>
-    <button class="tablink" onclick="openTab(event,'adminTab')">Admin</button>
-  </div>
-
-  <!-- Upload Tab -->
-  <div id="uploadTab" class="tabcontent active">
-    <h3>Upload JSON Reports</h3>
-    <input id="fileInput" type="file" accept=".json" multiple />
-    <div id="fileList" style="margin-top:10px"></div>
-    <p style="color:#666;font-size:13px;margin-top:8px">Tip: upload JSON files where each file is an array of objects with fields: <code>date, farm, 333, 332, 331, 330, 313-B</code>.</p>
-  </div>
-
-  <!-- Report Tab -->
-  <div id="reportTab" class="tabcontent">
-    <h3>Feed Report Viewer / Editor</h3>
-
-    <div class="report-controls">
-      <label for="fileSelector">Select Report:</label>
-      <select id="fileSelector" style="padding:8px;border-radius:6px;border:1px solid #cfd8e3"></select>
-
-      <div class="report-actions">
-        <button class="add-btn" id="addEntryBtn">+ Add Entry</button>
-        <button class="print-btn" id="printBtn">Print Report</button>
-        <button class="backup-btn" id="backupCurrentBtn">Backup (JSON)</button>
-        <button class="backup-btn" id="csvBtn">Export CSV</button>
+  <main class="card" id="app">
+    <div class="report-header">
+      <div>
+        <div class="report-title">Ittifaq Feeds Report</div>
+        <div id="reportDate" class="tiny">Report Generated on -</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label class="ghost" id="uploadLabel" style="padding:8px 10px;border-radius:8px;border:1px dashed #e2e8f0;cursor:pointer">
+          <input id="fileInput" type="file" accept="application/json" />
+          Upload JSON
+        </label>
+        <button id="exportBtn" class="ghost">Export JSON</button>
+        <button id="pdfBtn" class="ghost">Download PDF</button>
+        <button id="cloudSaveBtn" class="ghost">Save to Cloud</button>
+        <button id="addBtn">Add Entry</button>
       </div>
     </div>
 
-    <div id="reportWrapper">
-      <table id="reportTable" style="display:none">
-        <thead>
-          <tr>
-            <th>DATE</th>
-            <th>FARM NAME</th>
-            <th>333</th>
-            <th>332</th>
-            <th>331</th>
-            <th>330</th>
-            <th>313-B</th>
-            <th>ACTIONS</th>
-          </tr>
-        </thead>
-      </table>
+    <div id="tableArea"></div>
+    <div id="empty" class="muted tiny" style="margin-top:18px">No data loaded. Upload a JSON file or add entries.</div>
+  </main>
+
+  <footer style="max-width:1200px;margin:12px auto;display:flex;justify-content:space-between;color:var(--muted)">
+    <div class="tiny">Dates display as "08 Oct 2025". JSON export uses same format. Grouped by date with per-group totals.</div>
+    <div class="tiny">Admin can delete and upload JSON; employees cannot replace uploaded JSON.</div>
+  </footer>
+
+  <!-- Login modal -->
+  <div id="loginModal" class="modal-backdrop">
+    <div class="modal" role="dialog">
+      <h3>Login</h3>
+      <div style="margin-top:8px">
+        <label>User ID</label>
+        <input id="loginId" type="text" />
+        <div class="gap-small"></div>
+        <label>Password</label>
+        <input id="loginPass" type="password" />
+        <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+          <button id="loginCancel" class="ghost">Cancel</button>
+          <button id="loginSubmit">Login</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Admin Tab -->
-  <div id="adminTab" class="tabcontent">
-    <h3>Admin</h3>
-    <button id="clearBtn" class="clear-btn">Clear All Data</button>
+  <!-- Entry modal -->
+  <div id="modal" class="modal-backdrop">
+    <div class="modal" role="dialog">
+      <h3 id="modalTitle">Add / Edit Entry</h3>
+      <form id="entryForm">
+        <div class="form-grid" style="margin-top:8px">
+          <div>
+            <label>Date</label>
+            <input type="date" id="fDateNative" />
+            <input type="text" id="fDate" placeholder="08 Oct 2025" required />
+          </div>
+          <div>
+            <label>Farm</label>
+            <input type="text" id="fFarm" required />
+          </div>
+          <div>
+            <label>333</label><input type="number" id="f333" min="0" step="1" />
+          </div>
+          <div>
+            <label>332</label><input type="number" id="f332" min="0" step="1" />
+          </div>
+          <div>
+            <label>3331</label><input type="number" id="f3331" min="0" step="1" />
+          </div>
+          <div>
+            <label>330</label><input type="number" id="f330" min="0" step="1" />
+          </div>
+          <div>
+            <label>313-A</label><input type="number" id="f313A" min="0" step="1" />
+          </div>
+          <div>
+            <label>313-B</label><input type="number" id="f313B" min="0" step="1" />
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+          <button type="button" id="cancelBtn" class="ghost">Cancel</button>
+          <button type="submit" id="saveEntry">Save</button>
+        </div>
+      </form>
+    </div>
   </div>
 
-  <!-- Modal (used for Add & Edit) -->
-  <div id="overlay"></div>
-  <div id="editModal" role="dialog" aria-modal="true">
-    <h3 id="modalTitle">Edit Entry</h3>
-    <form id="editForm">
-      <input id="editDate" placeholder="Date (DD-MM-YYYY)" required />
-      <input id="editFarm" placeholder="Farm Name" required />
-      <input id="edit333" placeholder="333" type="number" step="any" />
-      <input id="edit332" placeholder="332" type="number" step="any" />
-      <input id="edit331" placeholder="331" type="number" step="any" />
-      <input id="edit330" placeholder="330" type="number" step="any" />
-      <input id="edit313B" placeholder="313-B" type="number" step="any" />
-
-      <div class="modal-actions">
-        <button type="submit" id="saveBtn" class="add-btn">Save</button>
-        <button type="button" onclick="closeModal()" style="background:#9aa3ad;color:#fff;padding:8px 12px;border-radius:8px">Cancel</button>
-         <button onclick="reopenDay()">Reopen Day</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Loading overlay -->
-  <div id="loadingOverlay">
-    <div class="spinner"></div>
-    <div style="color:#444;font-weight:600">Processing...</div>
-  </div>
+  <!-- libs -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
-const SUPABASE_URL = "https://kxrdehjguyeztfqhjfth.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4cmRlaGpndXllenRmcWhqZnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5NTE1ODQsImV4cCI6MjA3NTUyNzU4NH0.4ZJ0Dwrbzlcyqpobb7c3UyIrfHH-JfVW5Hy23M71LKo";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  /*********************************************************
+   * Config - REPLACE with your Supabase values below
+   *********************************************************/
+  const SUPABASE_URL = 'https://zxiastbukdpplukpvnas.supabase.co'; // <-- replace
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aWFzdGJ1a2RwcGx1a3B2bmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5NTg1NTMsImV4cCI6MjA3NTUzNDU1M30.GqkeYMjcNTxkSj-B5nScGQlqFFZTQWELWSCPz9lwgDU';               // <-- replace
 
-const FIELDS = ['333','332','331','330','313-B'];
-let currentFiles = {};
-let currentFileName = null;
-let editIndex = null;
-let isAddMode = false;
+  const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  /*********************************************************/
 
-function showLoading(show){ document.getElementById('loadingOverlay').style.display = show?'block':'none'; }
-function escapeHtml(s){ return String(s===undefined||s===null?'':s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[ch])); }
+  // App state
+  let state = { data: [], user: null, uploadedByAdmin: false };
+  let editIndex = null;
 
-function openTab(evt,id){
-  document.querySelectorAll('.tabcontent').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tablink').forEach(b=>b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  if(evt&&evt.currentTarget) evt.currentTarget.classList.add('active');
-}
-
-// === Load initial data ===
-window.addEventListener('DOMContentLoaded', async ()=>{
-  showLoading(true);
-  try {
-    const {data,error} = await supabase.from('feed_reports').select('*');
-    if(error) console.error(error);
-    if(data) data.forEach(r=> currentFiles[r.filename]=r.data||[]);
-  }catch(e){console.error(e);}
-  updateFileList();
-  updateFileSelector();
-  showLoading(false);
-});
-
-// === Upload JSON ===
-document.getElementById('fileInput').addEventListener('change', async e=>{
-  const files = Array.from(e.target.files||[]);
-  if(!files.length) return;
-  showLoading(true);
-  for(const f of files){
-    try{
-      const text = await f.text();
-      const json = JSON.parse(text);
-      if(!Array.isArray(json)){alert(`File ${f.name} must contain an array.`);continue;}
-      currentFiles[f.name]=json;
-      await supabase.from('feed_reports').upsert([{filename:f.name,data:json}]);
-    }catch(err){alert(`Error in ${f.name}: ${err}`);}
-  }
-  updateFileList();
-  updateFileSelector();
-  openTab({currentTarget:document.querySelector('.tablink:nth-child(2)')},'reportTab');
-  showLoading(false);
-});
-
-function updateFileList(){
-  const div=document.getElementById('fileList');
-  const names=Object.keys(currentFiles);
-  div.innerHTML=names.length?names.map(n=>`<div>${escapeHtml(n)}</div>`).join(''):'<div style="color:#666">No files loaded</div>';
-}
-
-function updateFileSelector(){
-  const sel=document.getElementById('fileSelector');
-  const names=Object.keys(currentFiles);
-  sel.innerHTML=names.length?names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join(''):'<option>-- No files --</option>';
-  if(names.length){currentFileName=names[0];sel.value=currentFileName;loadReport(currentFileName);}
-  else{document.getElementById('reportTable').style.display='none';}
-}
-document.getElementById('fileSelector').addEventListener('change',e=>{
-  currentFileName=e.target.value;
-  if(currentFileName)loadReport(currentFileName);
-});
-
-// === Render ===
-function loadReport(fn){currentFileName=fn;renderReport(currentFiles[fn]||[]);}
-
-function renderReport(data){
-  const table=document.getElementById('reportTable');
-  while(table.tBodies.length)table.removeChild(table.tBodies[0]);
-  if(!data.length){table.style.display='none';return;}
-
-  const groups={};
-  data.forEach((r,i)=>{const d=r.date||'Unknown';(groups[d]||(groups[d]=[])).push({...r,_index:i});});
-
-  Object.keys(groups).sort().forEach(date=>{
-    const tb=document.createElement('tbody');
-    const totals=FIELDS.reduce((a,f)=>(a[f]=0,a),{});
-    const closed=groups[date].every(e=>e.closed);
-
-    groups[date].forEach(r=>{
-      const tr=document.createElement('tr');
-      if(r.closed)tr.classList.add('closed-row');
-      let html=`<td>${escapeHtml(r.date||'')}</td><td>${escapeHtml(r.farm||'')}</td>`;
-      FIELDS.forEach(f=>{const v=r[f];if(v)totals[f]+=parseFloat(v)||0;html+=`<td>${escapeHtml(v||'')}</td>`;});
-      const dis=r.closed?'disabled':'';
-      html+=`<td><button class="edit-btn" ${dis} onclick="editEntry(${r._index})">Edit</button>
-                 <button class="remove-btn" ${dis} onclick="removeEntry(${r._index})">Remove</button></td>`;
-      tr.innerHTML=html;
-      tb.appendChild(tr);
-    });
-
-    const totalTr=document.createElement('tr');
-    totalTr.className='total-row';
-    let totalCells=`<td colspan="2">TOTAL (${escapeHtml(date)})</td>`;
-    FIELDS.forEach(f=>totalCells+=`<td>${totals[f]}</td>`);
-    totalCells+=closed
-      ? `<td><button class="close-day-btn" onclick="reopenDay('${escapeHtml(date)}')">Reopen Day</button></td>`
-      : `<td><button class="close-day-btn" onclick="closeDay('${escapeHtml(date)}')">Close Day</button></td>`;
-    totalTr.innerHTML=totalCells;
-    tb.appendChild(totalTr);
-    table.appendChild(tb);
-  });
-  table.style.display='table';
-}
-
-// === Reopen Day ===
-async function reopenDay(date){
-  if(!currentFileName)return alert('No file selected');
-  const pass=prompt('Enter admin password to reopen day:');
-  if(pass!=='123')return alert('Incorrect password.');
-  if(!confirm(`Reopen all entries for ${date}?`))return;
-
-  const data=currentFiles[currentFileName];
-  let changed=false;
-  data.forEach(e=>{if((e.date||'')===date && e.closed){e.closed=false;changed=true;}});
-  if(!changed)return alert('No closed entries found.');
-
-  showLoading(true);
-  try{
-    await supabase.from('feed_reports').update({data}).eq('filename',currentFileName);
-    renderReport(data);
-    alert('Day reopened. Entries are now editable.');
-  }catch(err){console.error(err);alert('Error reopening day.');}
-  showLoading(false);
-}
-
-// === Edit / Add ===
-document.getElementById('addEntryBtn').onclick = () => {
-  if (!currentFileName) return alert('No report selected.');
-  isAddMode = true;
-  editIndex = null;
-
-  document.getElementById('modalTitle').textContent = 'Add Entry';
-  document.getElementById('saveBtn').textContent = 'Add';
-
-  // --- Generate today's date in DD-MM-YYYY format ---
-  const d = new Date();
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  const today = `${day}-${month}-${year}`;
-
-  // --- Reset all fields ---
-  ['Date','Farm','333','332','331','330','313B'].forEach(id => {
-    document.getElementById('edit' + id).value = '';
-  });
-
-  document.getElementById('editDate').value = today;
-  document.getElementById('overlay').style.display = 'block';
-  document.getElementById('editModal').style.display = 'block';
-};
-
-function editEntry(i) {
-  if (!currentFileName) return alert('No file selected.');
-  const pass = prompt('Enter admin password:');
-  if (pass !== '123') return alert('Incorrect password.');
-
-  const data = currentFiles[currentFileName];
-  const e = data[i];
-  if (!e) return alert('Entry not found.');
-  if (e.closed) return alert('Closed entry.');
-
-  isAddMode = false;
-  editIndex = i;
-
-  document.getElementById('modalTitle').textContent = 'Edit Entry';
-  document.getElementById('saveBtn').textContent = 'Save';
-
-  // --- Pre-fill modal fields ---
-  document.getElementById('editDate').value = e.date || '';
-  document.getElementById('editFarm').value = e.farm || '';
-  document.getElementById('edit333').value = e['333'] || '';
-  document.getElementById('edit332').value = e['332'] || '';
-  document.getElementById('edit331').value = e['331'] || '';
-  document.getElementById('edit330').value = e['330'] || '';
-  document.getElementById('edit313B').value = e['313-B'] || '';
-
-  document.getElementById('overlay').style.display = 'block';
-  document.getElementById('editModal').style.display = 'block';
-}
-
-function closeModal() {
-  document.getElementById('overlay').style.display = 'none';
-  document.getElementById('editModal').style.display = 'none';
-}
-
-document.getElementById('editForm').onsubmit = async e => {
-  e.preventDefault();
-  if (!currentFileName) return;
-
-  const pass = prompt('Enter admin password:');
-  if (pass !== '123') return alert('Incorrect password.');
-
-  const obj = {
-    date: editDate.value.trim(),
-    farm: editFarm.value.trim(),
-    '333': edit333.value.trim(),
-    '332': edit332.value.trim(),
-    '331': edit331.value.trim(),
-    '330': edit330.value.trim(),
-    '313-B': edit313B.value.trim(),
-    closed: false
+  // credentials (you gave these)
+  const CREDENTIALS = {
+    admin: { id: 'admin22', pass: '12345', role: 'admin' },
+    employee: { id: 'user22', pass: '23456', role: 'employee' }
   };
 
-  // --- Validate date format DD-MM-YYYY ---
-  if (!/^\d{2}-\d{2}-\d{4}$/.test(obj.date)) {
-    alert('Please use date format DD-MM-YYYY');
-    return;
+  // elements
+  const currentUserDom = document.getElementById('currentUser');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const loginModal = document.getElementById('loginModal');
+  const loginSubmit = document.getElementById('loginSubmit');
+  const loginCancel = document.getElementById('loginCancel');
+  const loginId = document.getElementById('loginId');
+  const loginPass = document.getElementById('loginPass');
+
+  const fileInput = document.getElementById('fileInput');
+  const uploadLabel = document.getElementById('uploadLabel');
+  const exportBtn = document.getElementById('exportBtn');
+  const pdfBtn = document.getElementById('pdfBtn');
+  const cloudSaveBtn = document.getElementById('cloudSaveBtn');
+  const addBtn = document.getElementById('addBtn');
+
+  const tableArea = document.getElementById('tableArea');
+  const empty = document.getElementById('empty');
+  const reportDateDom = document.getElementById('reportDate');
+
+  const modal = document.getElementById('modal');
+  const entryForm = document.getElementById('entryForm');
+  const cancelBtn = document.getElementById('cancelBtn');
+  // fields
+  const fDateNative = document.getElementById('fDateNative');
+  const fDate = document.getElementById('fDate');
+  const fFarm = document.getElementById('fFarm');
+  const f333 = document.getElementById('f333');
+  const f332 = document.getElementById('f332');
+  const f3331 = document.getElementById('f3331');
+  const f330 = document.getElementById('f330');
+  const f313A = document.getElementById('f313A');
+  const f313B = document.getElementById('f313B');
+
+  // date helpers
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function pad(n){ return n<10?('0'+n):String(n); }
+  function isoToDisplay(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return pad(d.getDate())+' '+monthNames[d.getMonth()]+' '+d.getFullYear(); }
+  function parseAnyToDisplay(s){
+    if(!s) return '';
+    // already '08 Oct 2025'
+    if(/^[0-3]\d\s+[A-Za-z]{3}\s+\d{4}$/.test(s)) return s;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return isoToDisplay(s);
+    const m = s.match(/^(\d{1,2})[-\/]?(\d{1,2})[-\/]?(\d{4})$/);
+    if(m){ const day=Number(m[1]), mon=Number(m[2])-1, yr=Number(m[3]); if(mon>=0&&mon<12) return pad(day)+' '+monthNames[mon]+' '+yr; }
+    const d=new Date(s); if(!isNaN(d)) return pad(d.getDate())+' '+monthNames[d.getMonth()]+' '+d.getFullYear();
+    return '';
+  }
+  function displayToISO(display){
+    const m = display.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+    if(m){ const day=Number(m[1]), mon=monthNames.indexOf(m[2]), yr=Number(m[3]); if(mon>=0) return `${yr}-${String(mon+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`; }
+    if(/^\d{4}-\d{2}-\d{2}$/.test(display)) return display;
+    return null;
   }
 
-  showLoading(true);
-  try {
-    if (isAddMode) {
-      currentFiles[currentFileName].push(obj);
+  // wire date inputs
+  fDateNative.addEventListener('change', ()=> fDate.value = isoToDisplay(fDateNative.value));
+  fDate.addEventListener('input', ()=> { const iso = displayToISO(fDate.value); if(iso) fDateNative.value = iso; });
+
+  // login
+  loginBtn.addEventListener('click', ()=>{ loginModal.style.display='flex'; loginId.value=''; loginPass.value=''; });
+  loginCancel.addEventListener('click', ()=>{ loginModal.style.display='none'; });
+  loginSubmit.addEventListener('click', ()=> {
+    const id = (loginId.value||'').trim(), pass = (loginPass.value||'').trim();
+    if(!id || !pass) return alert('Enter id & password');
+    // simple client-side check per your supplied credentials
+    if(id===CREDENTIALS.admin.id && pass===CREDENTIALS.admin.pass){
+      setUser({ id: id, role: 'admin' });
+    } else if(id===CREDENTIALS.employee.id && pass===CREDENTIALS.employee.pass){
+      setUser({ id: id, role: 'employee' });
     } else {
-      Object.assign(currentFiles[currentFileName][editIndex], obj);
+      return alert('Invalid credentials');
+    }
+    loginModal.style.display='none';
+  });
+
+  logoutBtn.addEventListener('click', ()=>{ setUser(null); });
+
+  function setUser(u){
+    state.user = u;
+    if(u){
+      currentUserDom.textContent = `${u.id} (${u.role})`;
+      loginBtn.style.display='none';
+      logoutBtn.style.display='inline-block';
+    } else {
+      currentUserDom.textContent = 'Not logged';
+      loginBtn.style.display='inline-block';
+      logoutBtn.style.display='none';
+    }
+    refreshControls();
+  }
+
+  function refreshControls(){
+    // Only admin may upload/replace JSON
+    if(state.user && state.user.role==='admin' && !state.uploadedByAdmin){
+      uploadLabel.classList.remove('disabled');
+    } else {
+      uploadLabel.classList.add('disabled');
+    }
+    // If uploadedByAdmin true: only admin can re-upload (keep disabled for employee)
+    if(!state.user) uploadLabel.classList.add('disabled');
+    // cloud save allowed for both (button visible always)
+  }
+
+  // file upload (admin only)
+  fileInput.addEventListener('change', e=>{
+    if(!state.user || state.user.role !== 'admin'){
+      alert('Only admin can upload JSON files.');
+      fileInput.value = '';
+      return;
+    }
+    const f = e.target.files[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=> {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if(!Array.isArray(parsed)) throw new Error('JSON must be an array');
+        // load, normalize dates
+        const out = parsed.map(r=>({
+          Date: parseAnyToDisplay(r.Date||r.date||r.D||''),
+          Farm: String(r.Farm || r.farm || r.F || '').trim(),
+          '333': numOrNull(r['333']),
+          '332': numOrNull(r['332']),
+          '3331': numOrNull(r['3331']),
+          '330': numOrNull(r['330']),
+          '313-A': numOrNull(r['313-A']||r['313A']),
+          '313-B': numOrNull(r['313-B']||r['313B'])
+        }));
+        state.data = out;
+        state.uploadedByAdmin = true; // lock upload control to admin
+        saveLocal();
+        render();
+        alert('JSON loaded. Note: uploaded dataset is admin-controlled.');
+      } catch(err){
+        alert('Invalid JSON: '+err.message);
+      }
+    };
+    reader.readAsText(f);
+    fileInput.value = '';
+  });
+
+  // helper
+  function numOrNull(v){ if(v===null||v===undefined||v==='') return null; const n=Number(v); return isNaN(n)?null:n; }
+
+  // add / edit
+  addBtn.addEventListener('click', ()=> openModalForAdd());
+  cancelBtn.addEventListener('click', ()=> closeModal());
+
+  function openModalForAdd(){
+    editIndex = null;
+    document.getElementById('modalTitle').textContent='Add Entry';
+    const now=new Date(); fDateNative.value = now.toISOString().slice(0,10); fDate.value = isoToDisplay(fDateNative.value);
+    fFarm.value=''; f333.value=f332.value=f3331.value=f330.value=f313A.value=f313B.value='';
+    modal.style.display='flex';
+  }
+
+  function openModalForEdit(idx){
+    editIndex = idx;
+    document.getElementById('modalTitle').textContent='Edit Entry';
+    const e = state.data[idx];
+    fDate.value = e.Date||''; const iso = displayToISO(e.Date||''); fDateNative.value = iso||'';
+    fFarm.value = e.Farm||'';
+    f333.value = e['333'] ?? '';
+    f332.value = e['332'] ?? '';
+    f3331.value = e['3331'] ?? '';
+    f330.value = e['330'] ?? '';
+    f313A.value = e['313-A'] ?? '';
+    f313B.value = e['313-B'] ?? '';
+    modal.style.display='flex';
+  }
+
+  entryForm.addEventListener('submit', e=>{
+    e.preventDefault();
+    const dateDisplay = fDate.value || isoToDisplay(fDateNative.value);
+    const entry = {
+      Date: parseAnyToDisplay(dateDisplay),
+      Farm: (fFarm.value||'').trim(),
+      '333': numOrNull(f333.value),
+      '332': numOrNull(f332.value),
+      '3331': numOrNull(f3331.value),
+      '330': numOrNull(f330.value),
+      '313-A': numOrNull(f313A.value),
+      '313-B': numOrNull(f313B.value)
+    };
+    if(!entry.Date){ return alert('Please provide a valid date'); }
+    if(editIndex===null){
+      // merge if same date+farm
+      const idx = state.data.findIndex(r=>r.Date===entry.Date && r.Farm===entry.Farm);
+      if(idx!==-1){
+        ['333','332','3331','330','313-A','313-B'].forEach(k=>{ state.data[idx][k] = (state.data[idx][k]||0) + (entry[k]||0); });
+      } else state.data.push(entry);
+    } else {
+      state.data[editIndex] = entry;
+    }
+    saveLocal(); modal.style.display='none'; editIndex=null; render();
+  });
+
+  // delete (only admin) implemented in render per-row
+
+  // export JSON (uses display date format)
+  exportBtn.addEventListener('click', ()=>{
+    const out = state.data.map(r=>({
+      Date: r.Date,
+      Farm: r.Farm,
+      '333': r['333']||null,
+      '332': r['332']||null,
+      '3331': r['3331']||null,
+      '330': r['330']||null,
+      '313-A': r['313-A']||null,
+      '313-B': r['313-B']||null
+    }));
+    const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download='report.json'; a.click(); URL.revokeObjectURL(url);
+  });
+
+  // PDF download
+  pdfBtn.addEventListener('click', downloadPDF);
+
+  async function downloadPDF(){
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const now=new Date();
+    const reportDateStr = pad(now.getDate())+' '+monthNames[now.getMonth()]+' '+now.getFullYear();
+    pdf.setFontSize(16); pdf.text('Ittifaq Feeds Report', 40, 60);
+    pdf.setFontSize(10); pdf.text('Report Generated on ' + reportDateStr, 40, 78);
+
+    const headers = ['Date','Farm','333','332','3331','330','313-A','313-B'];
+    let y = 110; const startX = 40; const colWidths = [80,140,50,50,50,50,60,60];
+    pdf.setFontSize(9);
+    let x = startX;
+    headers.forEach((h,idx)=>{ pdf.text(h, x+2, y); x+=colWidths[idx]; });
+    y+=16;
+
+    // group by date for PDF same as screen
+    const groups = groupByDate(state.data);
+    for(const dt of Object.keys(groups).sort((a,b)=>dateToTimestamp(a)-dateToTimestamp(b))){
+      const rows = groups[dt];
+      // date header line in PDF
+      pdf.setFontSize(10); pdf.text(dt, startX, y); y+=14;
+      pdf.setFontSize(9);
+      rows.forEach(r=>{
+        x = startX;
+        const cells = [r.Date, r.Farm, r['333']||'', r['332']||'', r['3331']||'', r['330']||'', r['313-A']||'', r['313-B']||''];
+        cells.forEach((c,idx)=>{pdf.text(String(c||''), x+2, y); x+=colWidths[idx];});
+        y+=14;
+        if(y>750){ pdf.addPage(); y=40; }
+      });
+      // group totals
+      const tot = groupTotals(rows);
+      x = startX; pdf.setFontSize(9); pdf.text('Group totals:', x+2, y);
+      x += colWidths[0]+colWidths[1];
+      ['333','332','3331','330','313-A','313-B'].forEach((k,idx)=>{ pdf.text(String(tot[k]||''), x+2, y); x+=colWidths[idx+2]; });
+      y+=18;
+      if(y>700){ pdf.addPage(); y=40; }
     }
 
-    await supabase
-      .from('feed_reports')
-      .update({ data: currentFiles[currentFileName] })
-      .eq('filename', currentFileName);
-
-    renderReport(currentFiles[currentFileName]);
-  } catch (err) {
-    alert('Error saving');
-    console.error(err);
+    // grand totals
+    const grand = computeTotals();
+    pdf.setFontSize(11); pdf.text('Grand Totals:', startX, y); x = startX + colWidths[0] + colWidths[1];
+    ['333','332','3331','330','313-A','313-B'].forEach((k,idx)=>{ pdf.text(String(grand[k]||''), x+2, y); x+=colWidths[idx+2]; });
+    const filename = `FeedReport_${pad(now.getDate())}-${monthNames[now.getMonth()]}-${now.getFullYear()}.pdf`;
+    pdf.save(filename);
   }
-  showLoading(false);
-  closeModal();
-};
 
+  // Cloud save - upserts into Supabase table 'feed_reports'
+  cloudSaveBtn.addEventListener('click', async ()=>{
+    if(!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes('your-project')){
+      return alert('Please configure SUPABASE_URL and SUPABASE_ANON_KEY in the HTML before using Save to Cloud.');
+    }
+    if(!state.user) return alert('Please login first to save to cloud.');
+    if(!state.data.length) return alert('No data to save.');
 
-// === Remove ===
-async function removeEntry(i){
-  if(!currentFileName)return;
-  const pass=prompt('Enter admin password:');if(pass!=='123')return alert('Incorrect password.');
-  if(!confirm('Delete entry?'))return;
-  const d=currentFiles[currentFileName];
-  if(d[i].closed)return alert('Closed entry');
-  d.splice(i,1);
-  showLoading(true);
-  await supabase.from('feed_reports').update({data:d}).eq('filename',currentFileName);
-  renderReport(d);
-  showLoading(false);
-}
+    // Prepare rows: one DB row per data row
+    const rows = state.data.map(r=>({
+      report_date: r.Date,
+      farm: r.Farm,
+      val_333: r['333'] || null,
+      val_332: r['332'] || null,
+      val_3331: r['3331'] || null,
+      val_330: r['330'] || null,
+      val_313_a: r['313-A'] || null,
+      val_313_b: r['313-B'] || null,
+      created_by: state.user.id
+    }));
 
-// === Close Day ===
-async function closeDay(date){
-  if(!currentFileName)return;
-  const pass=prompt('Enter admin password:');if(pass!=='123')return alert('Incorrect password.');
-  if(!confirm(`Close entries for ${date}?`))return;
-  const d=currentFiles[currentFileName];
-  let changed=false;
-  d.forEach(e=>{if((e.date||'')===date && !e.closed){e.closed=true;changed=true;}});
-  if(!changed)return alert('Nothing to close');
-  showLoading(true);
-  await supabase.from('feed_reports').update({data:d}).eq('filename',currentFileName);
-  renderReport(d);
-  showLoading(false);
-  alert('Day closed.');
-}
-
-// === Backup ===
-document.getElementById('backupCurrentBtn').onclick=()=>{
-  if(!currentFileName)return alert('No file');
-  const d=currentFiles[currentFileName];
-  const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`${currentFileName.replace(/\.[^/.]+$/,'')}-backup.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-};
-
-// === CSV Export ===
-document.getElementById('csvBtn').onclick=()=>{
-  if(!currentFileName)return;
-  const d=currentFiles[currentFileName];
-  if(!d.length)return alert('No data');
-  const rows=[['DATE','FARM','333','332','331','330','313-B','STATUS']];
-  const groups={};
-  d.forEach(r=>{(groups[r.date]||(groups[r.date]=[])).push(r);});
-  Object.keys(groups).forEach(date=>{
-    groups[date].forEach(r=>rows.push([r.date,r.farm,r['333'],r['332'],r['331'],r['330'],r['313-B'],r.closed?'CLOSED':'OPEN']));
+    // try bulk insert
+    try {
+      const { data, error } = await supabase.from('feed_reports').insert(rows);
+      if(error) throw error;
+      alert('Saved to cloud: ' + (data?.length || rows.length) + ' rows.');
+    } catch(err){
+      console.error(err);
+      alert('Cloud save failed: ' + (err.message || JSON.stringify(err)));
+    }
   });
-  const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`${currentFileName}-export.csv`;
-  a.click();URL.revokeObjectURL(a.href);
-};
 
-// === Print ===
-document.getElementById('printBtn').onclick=()=>{
-  if(!currentFileName)return;
-  const d=currentFiles[currentFileName];
-  if(!d.length)return;
-  const html=generatePrintHTML(d,currentFileName);
-  const w=window.open('','_blank','width=900,height=700');
-  w.document.write(html);w.document.close();setTimeout(()=>{w.print();},400);
-};
+  // rendering & helpers
+  function render(){
+    tableArea.innerHTML = '';
+    if(!state.data.length){ empty.style.display='block'; reportDateDom.textContent='Report Generated on -'; refreshControls(); return; }
+    empty.style.display='none';
+    refreshControls();
+    const now = new Date(); reportDateDom.textContent = 'Report Generated on ' + pad(now.getDate())+' '+monthNames[now.getMonth()]+' '+now.getFullYear();
 
-function generatePrintHTML(data,filename){
-  const groups={};
-  data.forEach(r=>{(groups[r.date]||(groups[r.date]=[])).push(r);});
-  const body=Object.keys(groups).sort().map(date=>{
-    const rows=groups[date].map(r=>`<tr><td>${r.date}</td><td>${r.farm}</td><td>${r['333']}</td><td>${r['332']}</td><td>${r['331']}</td><td>${r['330']}</td><td>${r['313-B']}</td><td>${r.closed?'CLOSED':'OPEN'}</td></tr>`).join('');
-    const totals=FIELDS.map(f=>groups[date].reduce((s,e)=>s+(parseFloat(e[f])||0),0));
-    const totalRow=`<tr style="font-weight:700;background:#f3f3f3"><td colspan="2">TOTAL (${date})</td>${totals.map(t=>`<td>${t}</td>`).join('')}<td>-</td></tr>`;
-    return `<tbody>${rows}${totalRow}</tbody>`;
-  }).join('');
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${filename}</title>
-  <style>body{font-family:Arial;padding:18px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #bbb;padding:6px;text-align:center;font-size:12px;}th{background:#eee;}</style>
-  </head><body>
-  <div style="text-align:center;font-weight:700;font-size:18px">ITTIFAQ FEEDS</div>
-  <div style="text-align:center;margin-top:4px;font-size:13px">Feed Report — ${filename}</div>
-  <table><thead><tr><th>DATE</th><th>FARM</th><th>333</th><th>332</th><th>331</th><th>330</th><th>313-B</th><th>STATUS</th></tr></thead>${body}</table>
-  <div style="text-align:center;margin-top:12px;font-size:12px;color:#555">System developed by Aoun Ahmed</div>
-  </body></html>`;
-}
+    // group by Date
+    const groups = groupByDate(state.data);
+    const container = document.createElement('div');
 
-// === Clear All ===
-document.getElementById('clearBtn').onclick=async()=>{
-  const pass=prompt('Enter admin password:');if(pass!=='123')return;
-  if(!confirm('Clear all data?'))return;
-  showLoading(true);
-  await supabase.from('feed_reports').delete().neq('filename','');
-  currentFiles={};
-  updateFileList();updateFileSelector();
-  showLoading(false);
-  alert('All data cleared.');
-};
+    // for each date group
+    Object.keys(groups).sort((a,b)=>dateToTimestamp(a)-dateToTimestamp(b)).forEach(date=>{
+      const grp = groups[date];
+      const box = document.createElement('div'); box.className='group';
+      const gh = document.createElement('div'); gh.className='group-header';
+      gh.innerHTML = `<div><strong>${date}</strong> <span class="tiny">(${grp.length} entries)</span></div>
+                      <div class="group-totals tiny"></div>`;
+      box.appendChild(gh);
 
-// expose
-window.editEntry=editEntry;
-window.removeEntry=removeEntry;
-window.closeDay=closeDay;
-window.reopenDay=reopenDay;
-</script>
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      thead.innerHTML = `<tr><th>Farm</th><th>333</th><th>332</th><th>3331</th><th>330</th><th>313-A</th><th>313-B</th><th>Actions</th></tr>`;
+      table.appendChild(thead);
+      const tbody = document.createElement('tbody');
+      grp.forEach((row,i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${escapeHtml(row.Farm)}</td>
+                        <td>${displayVal(row['333'])}</td>
+                        <td>${displayVal(row['332'])}</td>
+                        <td>${displayVal(row['3331'])}</td>
+                        <td>${displayVal(row['330'])}</td>
+                        <td>${displayVal(row['313-A'])}</td>
+                        <td>${displayVal(row['313-B'])}</td>
+                        <td class="actions"></td>`;
+        const actions = tr.querySelector('.actions');
+        const globalIndex = state.data.findIndex(r=>r.Date===row.Date && r.Farm===row.Farm && r['333']===row['333'] && r['332']===row['332']); // best-effort
+        const editBtn = document.createElement('button'); editBtn.textContent='Edit'; editBtn.className='ghost';
+        editBtn.addEventListener('click', ()=> openModalForEdit(globalIndex));
+        actions.appendChild(editBtn);
+        if(state.user && state.user.role==='admin'){
+          const delBtn = document.createElement('button'); delBtn.textContent='Delete'; delBtn.className='danger';
+          delBtn.addEventListener('click', ()=> {
+            if(!confirm('Delete this entry?')) return;
+            // remove the first matching entry
+            const idx = state.data.findIndex(r=>r.Date===row.Date && r.Farm===row.Farm && r['333']===row['333'] && r['332']===row['332']);
+            if(idx>=0) state.data.splice(idx,1);
+            saveLocal(); render();
+          });
+          actions.appendChild(delBtn);
+        }
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+
+      // group totals row
+      const gt = groupTotals(grp);
+      const tf = document.createElement('div');
+      tf.className='tiny';
+      tf.innerHTML = `Totals — 333: ${gt['333']||''} &nbsp;&nbsp; 332: ${gt['332']||''} &nbsp;&nbsp; 3331: ${gt['3331']||''} &nbsp;&nbsp; 330: ${gt['330']||''} &nbsp;&nbsp; 313-A: ${gt['313-A']||''} &nbsp;&nbsp; 313-B: ${gt['313-B']||''}`;
+      box.appendChild(table);
+      box.appendChild(tf);
+
+      container.appendChild(box);
+    });
+
+    // grand totals at the bottom
+    const grand = computeTotals();
+    const grandBox = document.createElement('div'); grandBox.style.marginTop='8px';
+    const gtbl = document.createElement('table'); gtbl.innerHTML = `<thead><tr><th style="width:220px">Grand Totals</th><th>333</th><th>332</th><th>3331</th><th>330</th><th>313-A</th><th>313-B</th></tr></thead>`;
+    const gb = document.createElement('tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td></td><td>${grand['333']||''}</td><td>${grand['332']||''}</td><td>${grand['3331']||''}</td><td>${grand['330']||''}</td><td>${grand['313-A']||''}</td><td>${grand['313-B']||''}</td>`;
+    gb.appendChild(tr);
+    gtbl.appendChild(gb);
+    grandBox.appendChild(gtbl);
+    container.appendChild(grandBox);
+
+    tableArea.appendChild(container);
+  }
+
+  function groupByDate(arr){
+    const g = {};
+    arr.forEach(r=>{ if(!g[r.Date]) g[r.Date]=[]; g[r.Date].push(r); });
+    return g;
+  }
+  function groupTotals(rows){
+    const t={'333':0,'332':0,'3331':0,'330':0,'313-A':0,'313-B':0};
+    rows.forEach(r=>{ Object.keys(t).forEach(k=> t[k] += r[k]||0 ); });
+    return t;
+  }
+  function computeTotals(){ return groupTotals(state.data); }
+  function dateToTimestamp(display){ const iso = displayToISO(display); if(iso) return new Date(iso).getTime(); const d=new Date(display); return isNaN(d)?0:d.getTime(); }
+  function displayToISO(display){
+    const m = display.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+    if(m){ const day=Number(m[1]), mon=monthNames.indexOf(m[2]), yr=Number(m[3]); if(mon>=0) return `${yr}-${String(mon+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`; }
+    if(/^\d{4}-\d{2}-\d{2}$/.test(display)) return display;
+    return null;
+  }
+  function dateToTimestamp(display){ const iso = displayToISO(display); if(iso) return new Date(iso).getTime(); const d=new Date(display); return isNaN(d)?0:d.getTime(); }
+
+  function displayVal(v){ return (v===null||v===undefined)?'':v; }
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function saveLocal(){ try{ localStorage.setItem('report_data', JSON.stringify(state)); }catch(e){} }
+  function loadLocal(){ try{ const raw = localStorage.getItem('report_data'); if(!raw) return; const parsed = JSON.parse(raw); if(parsed && parsed.data) state = parsed; }catch(e){} }
+
+  // init from local
+  loadLocal();
+  render();
+
+  // utility: remove duplicates rough
+  function findRowIndex(row){ return state.data.findIndex(r=>r.Date===row.Date && r.Farm===row.Farm); }
+
+  // Save to cloud SQL note:
+  // Use the SQL in the instructions to create table:
+  // create table public.feed_reports ( id bigint generated by default as identity primary key, report_date text, farm text, val_333 integer, val_332 integer, val_3331 integer, val_330 integer, val_313_a integer, val_313_b integer, created_by text, created_at timestamptz default now());
+  // After table created, cloud save will insert rows.
+
+  // helper for PDF group totals & ordering
+  function dateToTimestamp(display){
+    const iso = displayToISO(display);
+    if(iso) return new Date(iso).getTime();
+    const d = new Date(display);
+    return isNaN(d)?0:d.getTime();
+  }
+
+  // ensure controls according to login status
+  refreshControls();
+
+  </script>
 </body>
 </html>
