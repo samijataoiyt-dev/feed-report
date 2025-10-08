@@ -1,146 +1,124 @@
-body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-  background-color: #f9f9f9;
-  color: #333;
+/* Simple modern dashboard styles - sidebar + main layout */
+
+:root{
+  --bg:#f6f8fb;
+  --muted:#6b7280;
+  --card:#ffffff;
+  --primary:#0066ff;
+  --danger:#dc3545;
+  --shadow: 0 6px 18px rgba(12, 24, 40, 0.06);
+  --radius: 10px;
+  --gap: 14px;
+  --maxwide:1100px;
 }
 
-header {
-  text-align: center;
-  margin-bottom: 20px;
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  background:var(--bg);
+  color:#0b1220;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
 
-.tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+/* Layout */
+.layout{
+  display:flex;
+  min-height:100vh;
 }
 
-.tablink {
-  padding: 8px 16px;
-  border: none;
-  background: #ddd;
-  cursor: pointer;
-  border-radius: 5px;
-  font-weight: bold;
+.sidebar{
+  width:260px;
+  padding:22px;
+  background:linear-gradient(180deg,#fff,#f8fbff);
+  border-right:1px solid rgba(11,18,32,0.04);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 
-.tablink.active {
-  background: #007bff;
-  color: white;
+.brand h1{margin:0;font-size:18px}
+.auth-section{margin-top:6px}
+.card{
+  background:var(--card);
+  padding:14px;
+  border-radius:10px;
+  box-shadow:var(--shadow);
 }
 
-.tabcontent {
-  display: none;
+.hidden{display:none}
+
+/* Nav */
+.nav{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.nav-btn{
+  text-align:left;
+  padding:10px 12px;border-radius:8px;border:none;background:transparent;cursor:pointer;font-weight:600;color:#0b1220;
+}
+.nav-btn.active{background:rgba(0,102,255,0.1);color:var(--primary)}
+
+.sidebar-foot{margin-top:auto;font-size:12px;color:var(--muted)}
+
+/* Main */
+.main{flex:1;padding:22px;display:flex;flex-direction:column;gap:16px}
+.topbar{display:flex;justify-content:space-between;align-items:center}
+.topbar h2{margin:0}
+.muted{color:var(--muted);font-size:13px}
+.small{font-size:12px;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.row{display:flex;gap:10px;align-items:center}
+.space-between{justify-content:space-between}
+
+/* Buttons */
+.btn{
+  padding:8px 12px;border-radius:8px;border:1px solid rgba(11,18,32,0.06);background:#fff;cursor:pointer;
+}
+.btn.primary{background:var(--primary);color:#fff;border:none}
+.btn.outline{background:transparent;border:1px solid rgba(11,18,32,0.08)}
+.btn.danger{background:var(--danger);color:#fff;border:none}
+.btn:disabled{opacity:0.6;cursor:not-allowed}
+
+/* File list */
+.file-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.file-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:#f2f8ff}
+
+/* Report */
+.report-wrapper{margin-top:12px;overflow:auto}
+.report-table{width:100%;border-collapse:collapse;background:var(--card);box-shadow:var(--shadow);border-radius:8px;overflow:hidden}
+.report-table thead th{background:#f3f6fb;padding:10px;border-bottom:1px solid rgba(11,18,32,0.06);text-align:center}
+.report-table td{padding:8px;border-bottom:1px solid rgba(11,18,32,0.04);text-align:center}
+.total-row{font-weight:700;background:#fafcff}
+
+/* Modal */
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(8,12,20,0.35);z-index:90}
+.modal{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100;
+  width:420px;max-width:94%;padding:18px;border-radius:10px;background:var(--card);box-shadow:var(--shadow);
 }
 
-.tabcontent.active {
-  display: block;
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+/* form */
+.form input{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid rgba(11,18,32,0.06)}
+
+/* toast */
+.toast{
+  position:fixed;right:20px;bottom:20px;background:#111;color:#fff;padding:10px 14px;border-radius:8px;z-index:120;
 }
 
-#fileList {
-  margin-top: 10px;
+/* loading */
+.loading-overlay{
+  position:fixed;left:0;top:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.7);z-index:200;
 }
-
-#fileList div {
-  margin: 5px 0;
-  padding: 6px;
-  background: #eef;
-  border-radius: 4px;
+.spinner{
+  width:44px;height:44px;border-radius:50%;border:6px solid #e6eefc;border-top-color:var(--primary);animation:spin 1s linear infinite;margin-bottom:10px;
 }
+@keyframes spin{to{transform:rotate(360deg)}}
 
-#reportWrapper {
-  margin-top: 20px;
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  font-size: 12px;
-}
-
-th, td {
-  border: 1px solid #aaa;
-  padding: 6px;
-  text-align: center;
-}
-
-th {
-  background: #e2e2e2;
-}
-
-tr.total-row {
-  font-weight: bold;
-  background-color: #f0f0f0;
-}
-
-.edit-btn {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-#clearBtn {
-  padding: 10px 16px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-#editModal {
-  display: none;
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  border: 2px solid #333;
-  padding: 20px;
-  z-index: 9999;
-  box-shadow: 0 0 10px rgba(0,0,0,0.4);
-}
-
-#overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
-  z-index: 9998;
-}
-
-/* Loading Spinner */
-#loadingOverlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255,255,255,0.8);
-  z-index: 10000;
-  text-align: center;
-  padding-top: 200px;
-}
-
-.spinner {
-  border: 6px solid #eee;
-  border-top: 6px solid #007bff;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 10px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* small screens */
+@media(max-width:900px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;order:2;display:flex;flex-direction:row;gap:8px;align-items:center;padding:12px}
+  .main{order:1;padding:12px}
+  .grid{grid-template-columns:1fr}
 }
